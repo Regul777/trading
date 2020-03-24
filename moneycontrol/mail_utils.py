@@ -41,9 +41,3 @@ class smtp_client :
     s.send_message(msg)
     
     del msg
-
-    # sending the mail 
-    #s.sendmail("nishant.gupta.trading", receipient_address, message) 
-
-    # terminating the session 
-    #s.quit()

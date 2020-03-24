@@ -8,8 +8,6 @@ Created on Thu Mar 19 23:00:13 2020
 
 from bs4 import BeautifulSoup
 from yahoo_finance_data_getter import yahoo_finance_data_getter
-from mail_utils import smtp_client
-import pandas as pd
 import requests
 
 class packed_data_today :
@@ -97,9 +95,18 @@ class moneycontrol_data_extractor:
     #If we don't have any gain data for this stock, we must be having lose data of this then
     if (len(gain_data) == 0):
         gain_data = soup.find_all("span", {"class" : "bse_span_price_change_prcnt txt14R"})
-    gain_data = gain_data[0].text.split(' ')
-    gain = gain_data[0]
-    gain_percent = gain_data[1].split('(')[1].split('%')[0]
+        
+    if (len(gain_data) == 0) :
+        # There are few stocks for which we don't have the gain data available on moneycontrol
+        # TODO: Fetch that data from yahoo finance
+        # Display the name of the stock as well
+        print("Gain data not available")
+        gain = 0
+        gain_percent = 0
+    else :
+        gain_data = gain_data[0].text.split(' ')
+        gain = gain_data[0]
+        gain_percent = gain_data[1].split('(')[1].split('%')[0]
     return open_price, close_price, gain, gain_percent, volume
     
     
@@ -138,13 +145,14 @@ class moneycontrol_data_extractor:
     return prev_close_val, today_data, moving_averages
       
   @staticmethod
-  def get_hourly_movers(url, num_stocks, num_days_for_moving_average) :
+  def get_hourly_movers(url, num_stocks, num_days_for_moving_average, delta_from_fifty_week_low) :
     page = requests.get(url)
     page_content = page.content
     soup = BeautifulSoup(page_content, "lxml")
     table = soup.find_all("div", {"class" : "bsr_table bsr_table930 hist_tbl"})
     ctr = 0
     output = []
+    nearly_fifty_two_week_low_stocks = []
     place_of_moving_average = {5 : 0, 10 : 1, 20 : 2, 50 : 3, 200 : 4}
     moving_avg_idx = place_of_moving_average[num_days_for_moving_average]
     
@@ -164,7 +172,6 @@ class moneycontrol_data_extractor:
 
         cols = [x.text.strip() for x in cols]
         name = cols[0].split('\n')[0]
-      
         # We have got all the data now, fill it in the schema
         row_data.append(name)
         row_data.append(prev_close_val)
@@ -194,14 +201,24 @@ class moneycontrol_data_extractor:
         row_data.append(moving_averages[4][1])
         row_data.append(today_data.volume)
         
+        closing_val = cols[2].replace(',', '')
+        if (float(today_data.fifty_two_week_low) * delta_from_fifty_week_low > float(closing_val)) :
+          print("Name: ", name, " closing val: ", closing_val, " 52W low: ", today_data.fifty_two_week_low)
+          nearly_fifty_two_week_low_stocks.append(name)
+            
+            
         # Setup an alert when stock breaches it's MA
-        signal = 'B'
+        signal = '-'
         # cols[5] is current value of the stock which can be of the form 4,234.45
         # we need to convert this to 4234.45 in float for a valid comparison
         val = cols[5].replace(',', '')
-        if (float(val) < float(moving_averages[moving_avg_idx][1])) :
-            print("Stock : ", name , " has gone below the : ", num_days_for_moving_average, " days moving average")
+        if ((moving_averages[moving_avg_idx][1]) == "-") :
+            print("No ", num_days_for_moving_average, " moving data available for: ", name)
         else :
+          if (float(val) < float(moving_averages[moving_avg_idx][1])) :
+            signal = 'B'
+            print("Stock : ", name , " has gone below the : ", num_days_for_moving_average, " days moving average")
+          else :
             print("Stock : ", name, " has gone past the moving average")
             signal = 'S'            
         
@@ -210,8 +227,8 @@ class moneycontrol_data_extractor:
         ctr += 1
         if (ctr > num_stocks):
           break
-    
-    return output
+
+    return output, nearly_fifty_two_week_low_stocks
 
   @staticmethod
   def get_daily_movers(url, num_stocks, num_days_for_moving_average) :
@@ -278,50 +295,3 @@ class moneycontrol_data_extractor:
           break
     
     return output
-
-moving_average_to_consider = 200
-
-hourly_num_stocks = 10
-hourly_schema = ['Name', 'Prev Close', 'Open Price', 'Close Price', 'Gain', 'Gain %', 'Current Price', '52Week low', '52Week high', 'Today low', 'Today high', '5 MA', '10 MA', '20 MA', '50 MA', '200 MA', 'Volume', 'Signal']
-hourly_gain_url = 'https://www.moneycontrol.com/stocks/marketstats/hourly_gain/bse/curr_hour/index.php'
-hourly_loss_url = 'https://www.moneycontrol.com/stocks/marketstats/hourly_loss/bse/curr_hour/index.php'
-hourly_gainers = moneycontrol_data_extractor.get_hourly_movers(hourly_gain_url, hourly_num_stocks, moving_average_to_consider)
-hourly_gainers = pd.DataFrame(hourly_gainers, columns = hourly_schema)
-hourly_losers = moneycontrol_data_extractor.get_hourly_movers(hourly_loss_url, hourly_num_stocks, moving_average_to_consider)
-hourly_losers = pd.DataFrame(hourly_losers, columns = hourly_schema)
-print(hourly_gainers)
-print(hourly_losers)
-
-daily_num_stocks = 20
-daily_schema = ['Name', 'Prev Close', 'Open Price', 'Close Price', 'Gain', 'Gain %', '52Week low', '52Week high', 'Today low', 'Today high', '5 MA', '10 MA', '20 MA', '50 MA', '200 MA', 'Volume', 'Signal']
-top_gainers_url = "https://www.moneycontrol.com/stocks/marketstats/bsegainer/index.php"
-top_losers_url = "https://www.moneycontrol.com/stocks/marketstats/bseloser/index.php"
-top_gainers = moneycontrol_data_extractor.get_daily_movers(top_gainers_url, daily_num_stocks, moving_average_to_consider)
-top_gainers = pd.DataFrame(top_gainers, columns = daily_schema)
-top_losers = moneycontrol_data_extractor.get_daily_movers(top_losers_url, daily_num_stocks, moving_average_to_consider)
-top_losers = pd.DataFrame(top_losers, columns = daily_schema)
-top_losers.to_excel('output.xlsx', sheet_name = '22-03-2020')
-print(top_gainers)
-print(top_losers)
-
-mail_schema = ['Name', 'Gain %']
-interesting_stocks = top_losers[top_losers['Signal'] == 'B']
-message = interesting_stocks[mail_schema].values.tolist()
-smtp_client.send_mail("niku2907@gmail.com", str(message), "Buys based on today's losers")
-print(message)
-
-interesting_stocks = top_gainers[top_gainers['Signal'] == 'B']
-message = interesting_stocks[mail_schema].values.tolist()
-smtp_client.send_mail("niku2907@gmail.com", str(message), "Buys based on today's gainers")
-print(message)
-
-
-interesting_stocks = top_losers[top_losers['Signal'] == 'S']
-message = interesting_stocks[mail_schema].values.tolist()
-smtp_client.send_mail("niku2907@gmail.com", str(message), "Sells based on today's losers")
-print(message)
-
-interesting_stocks = top_gainers[top_gainers['Signal'] == 'S']
-message = interesting_stocks[mail_schema].values.tolist()
-smtp_client.send_mail("niku2907@gmail.com", str(message), "Sells based on today's gainers")
-print(message)
