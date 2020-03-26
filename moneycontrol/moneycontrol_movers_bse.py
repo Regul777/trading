@@ -8,6 +8,8 @@ Created on Thu Mar 19 23:00:13 2020
 
 from bs4 import BeautifulSoup
 from yahoo_finance_data_getter import yahoo_finance_data_getter
+import datetime
+import pandas_datareader.data as pdr
 import requests
 
 class packed_data_today :
@@ -124,7 +126,7 @@ class moneycontrol_data_extractor:
     # 200	119.69
     moving_averages = moneycontrol_data_extractor.get_moving_averages(redirect_content)
         
-    # Following comment out code is pretty unreliable as symbols are only available
+    # Following commented out code is pretty unreliable as symbols are only available
     # for stocks which are listed on BSE and without symbols we can not use yahoo financials
     # So, for now we are going ahead with "SIMPLE MOVING AVERAGES" on the redirect url     
     # symbol = moneycontrol_data_extractor.get_symbol_for_interesting_stock(redirect_content)
@@ -143,6 +145,34 @@ class moneycontrol_data_extractor:
     today_open_price, today_close_price, today_gain, today_gain_percent, today_volume = moneycontrol_data_extractor.get_today_open_close_gain_volume(redirect_content)
     today_data = packed_data_today(today_low, today_high, fifty_two_week_low, fifty_two_week_high, today_open_price, today_close_price, today_gain, today_gain_percent, today_volume)
     return prev_close_val, today_data, moving_averages
+
+  @staticmethod
+  def get_macd_signal(redirect_content, fast, slow, signal) :
+    macd_signal = '-'
+    try:
+      symbol = moneycontrol_data_extractor.get_symbol_for_interesting_stock(redirect_content)
+      symbol += ".BO"
+      if (symbol != ".BO") :
+        # First get the 5 months data
+        ohlcv = pdr.get_data_yahoo(symbol, datetime.date.today() - datetime.timedelta(1825), datetime.date.today())
+        df = ohlcv.copy()
+        df["MA_Fast"] = df["Adj Close"].ewm(span = fast, min_periods = fast).mean()
+        df["MA_Slow"]=df["Adj Close"].ewm(span = slow, min_periods = slow).mean()
+        df["MACD"]=df["MA_Fast"]-df["MA_Slow"]
+        df["Signal"]=df["MACD"].ewm(span = signal, min_periods = signal).mean()
+        df.dropna(inplace=True)
+        last_row = df.iloc[-1, :]
+        signal = last_row['Signal']
+        macd = last_row['MACD']
+        if (macd > signal) :
+          macd_signal = 'B'
+        else :
+          macd_signal = 'S'
+    except :
+      print("No data fetched from Yahoo Daily Reader")
+        
+    return macd_signal 
+    
       
   @staticmethod
   def get_hourly_movers(url, num_stocks, num_days_for_moving_average, delta_from_fifty_week_low) :
@@ -220,9 +250,10 @@ class moneycontrol_data_extractor:
             print("Stock : ", name , " has gone below the : ", num_days_for_moving_average, " days moving average")
           else :
             print("Stock : ", name, " has gone past the moving average")
-            signal = 'S'            
+            signal = 'S'           
         
         row_data.append(signal)
+        row_data.append(moneycontrol_data_extractor.get_macd_signal(redirect_content, 12, 26, 9))
         output.append(row_data)
         ctr += 1
         if (ctr > num_stocks):
@@ -289,6 +320,7 @@ class moneycontrol_data_extractor:
             signal = 'S'            
         
         row_data.append(signal)
+        row_data.append(moneycontrol_data_extractor.get_macd_signal(redirect_content, 12, 26, 9))
         output.append(row_data)
         ctr += 1
         if (ctr > num_stocks):

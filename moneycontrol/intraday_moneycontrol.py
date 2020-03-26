@@ -15,7 +15,7 @@ moving_average_to_consider = 10
 
 hourly_num_stocks = 20
 delta_from_fifty_two_week_low = 1.02
-hourly_schema = ['Name', 'Prev Close', 'Open Price', 'Close Price', 'Gain', 'Gain %', 'Current Price', '52Week low', '52Week high', 'Today low', 'Today high', '5 MA', '10 MA', '20 MA', '50 MA', '200 MA', 'Volume', 'Signal']
+hourly_schema = ['Name', 'Prev Close', 'Open Price', 'Close Price', 'Gain', 'Gain %', 'Current Price', '52Week low', '52Week high', 'Today low', 'Today high', '5 MA', '10 MA', '20 MA', '50 MA', '200 MA', 'Volume', 'Signal', 'MACD Signal']
 hourly_gain_url = 'https://www.moneycontrol.com/stocks/marketstats/hourly_gain/bse/curr_hour/index.php'
 hourly_loss_url = 'https://www.moneycontrol.com/stocks/marketstats/hourly_loss/bse/curr_hour/index.php'
 hourly_gainers, temp  = moneycontrol_data_extractor.get_hourly_movers(hourly_gain_url, hourly_num_stocks, moving_average_to_consider, delta_from_fifty_two_week_low)
@@ -34,9 +34,19 @@ message = interesting_stocks[mail_schema].values.tolist()
 smtp_client.send_mail("niku2907@gmail.com", str(message), "Buys based on hourly losers")
 
 # Alert for potential sell positions based on MA
-interesting_stocks = hourly_losers[hourly_gainers['Signal'] == 'S']
+interesting_stocks = hourly_gainers[hourly_gainers['Signal'] == 'S']
 message = interesting_stocks[mail_schema].values.tolist()
 smtp_client.send_mail("niku2907@gmail.com", str(message), "Sells based on hourly gainers")
+
+# Alert for potential buy positions based on MACD
+interesting_stocks = hourly_losers[hourly_losers['MACD Signal'] == 'B']
+message = interesting_stocks[mail_schema].values.tolist()
+smtp_client.send_mail("niku2907@gmail.com", str(message), "Buys (MACD) based on hourly losers")
+
+# Alert for potential sell positions based on MA
+interesting_stocks = hourly_gainers[hourly_gainers['MACD Signal'] == 'S']
+message = interesting_stocks[mail_schema].values.tolist()
+smtp_client.send_mail("niku2907@gmail.com", str(message), "Sells (MACD) based on hourly gainers")
 
 print(message)
 print(hourly_gainers)
