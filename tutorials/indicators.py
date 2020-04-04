@@ -8,6 +8,8 @@ Created on Thu Apr  2 13:47:54 2020
 
 import numpy as np
 import statsmodels.api as sm
+
+from fibonacci_retracement import fib_levels_helper
 from stocktrends import Renko
 
 class Indicator:
@@ -51,6 +53,7 @@ class Indicator:
         
         # TODO: Investigate what brick size is good
         df2.brick_size = max(5, round(Indicator.ATR(DF, 120)["ATR"][-1], 0))
+        print("Brick size: ", df2.brick_size)
         renko_df = df2.get_ohlc_data()
         renko_df["bar_num"] = np.where(renko_df["uptrend"] == True, 1, np.where(renko_df["uptrend"] == False, -1, 0))
         for i in range(1,len(renko_df["bar_num"])):
@@ -145,3 +148,43 @@ class Indicator:
             ADX.append(((n-1)*ADX[j-1] + DX[j])/n)
     df2['ADX']=np.array(ADX)
     return df2['ADX']
+
+  def Fib_levels(DF) :
+    df2 = DF.copy()
+    R1 = []
+    S1 = []
+    R2 = []
+    S2 = []
+    R3 = []
+    S3 = []
+    R1.append('NA')
+    S1.append('NA')
+    R2.append('NA')
+    S2.append('NA')
+    R3.append('NA')
+    S3.append('NA')
+    for i in range(1, len(df2)):
+      prev_high = df2['High'][i-1]
+      prev_low = df2['Low'][i-1]
+      uptrend = False
+      if (df2['bar_num'][i-1] >= 4) :
+        print("Assuming stock to be in uptrend while calculating fibonacci levels")
+        uptrend = True
+      else :
+        print("Assuming stock to be in downtrend while calculating fibonacci levels")
+      fib_levels = fib_levels_helper.get(prev_high, prev_low, uptrend)
+      R1.append(fib_levels.RS1.resistance)
+      S1.append(fib_levels.RS1.support)
+      R2.append(fib_levels.RS2.resistance)
+      S2.append(fib_levels.RS2.support)
+      R3.append(fib_levels.RS3.resistance)
+      S3.append(fib_levels.RS3.support)
+      #print("R1: ", temp.RS1.resistance, " S1: ", temp.RS1.support)
+
+    df2['R1'] = R1
+    df2['S1'] = S1
+    df2['R2'] = R2
+    df2['S2'] = S2
+    df2['R3'] = R3
+    df2['S3'] = S3
+    return df2  
