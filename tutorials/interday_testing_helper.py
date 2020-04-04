@@ -13,11 +13,12 @@ import pandas_datareader.data as pdr
 from indicators import Indicator
 
 class interday_data:
-  def __init__(self, tickers, collated_data, ohlc_renko, tickers_ret, tickers_signal) :
+  def __init__(self, tickers, collated_data, ohlc_renko, tickers_ret, tickers_state, tickers_signal) :
     self.tickers = tickers
     self.collated_data = collated_data
     self.ohlc_renko = ohlc_renko
     self.tickers_ret = tickers_ret
+    self.tickers_state = tickers_state
     self.tickers_signal = tickers_signal
       
 class interday_testing_helper :
@@ -46,6 +47,7 @@ class interday_testing_helper :
     df = copy.deepcopy(ohlc_interday)
     collated_data = {}
     tickers_ret = {}
+    tickers_state = {}
     tickers_signal = {}
     for ticker in tickers:
       renko = Indicator.renko_DF(df[ticker])
@@ -58,7 +60,7 @@ class interday_testing_helper :
       # RSI < 30 : oversold
       rsi = Indicator.RSI(df[ticker], 14)
       rsi_frame = rsi.to_frame()
-      rsi_frame.reset_index(inplace=True)
+      rsi_frame.reset_index(inplace = True)
       rsi_frame.columns = ["Date", "RSI"]
     
       # ADX (trend) is also for last 14 days
@@ -83,11 +85,16 @@ class interday_testing_helper :
     
       # Merging the ADX data
       ohlc_renko[ticker] = ohlc_renko[ticker].merge(adx_frame.loc[:,["Date","ADX"]], how="outer", on="Date")
-      collated_data[ticker] = ohlc_renko[ticker].iloc[:, [3, 5, 6, 8, 9, 10]]
+      #collated_data[ticker] = ohlc_renko[ticker].iloc[:, [3, 5, 6, 8, 9, 10]]
+      collated_data[ticker] = Indicator.Fib_levels(ohlc_renko[ticker])
+      #collated_data[ticker] = collated_data[ticker].iloc[:, [3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]]
+      #collated_data[ticker] = collated_data[ticker].iloc[:, [0, 5]]
       collated_data[ticker].set_index("Date", inplace = True)
-      tickers_signal[ticker] = []
+      collated_data[ticker] = collated_data[ticker].iloc[:, [0, 1, 2, 3,5,7,8,9,10,11,12,13,14,15]]
+      tickers_state[ticker] = []
       tickers_ret[ticker] = []
+      tickers_signal[ticker] = []
       
-    return interday_data(tickers, collated_data, ohlc_renko, tickers_ret, tickers_signal)
+    return interday_data(tickers, collated_data, ohlc_renko, tickers_ret, tickers_state, tickers_signal)
 
     
