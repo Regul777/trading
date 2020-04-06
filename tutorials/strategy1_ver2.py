@@ -28,13 +28,13 @@ Created on Sun Apr  5 02:28:16 2020
 
 from Common import DecisionParams
 from interday_testing_helper import interday_testing_helper
-from Strategy1 import Strategy1
+from Strategy import Strategy1
 from Strategy_Runner import Strategy_Runner
 
 tickers = ["HDFCBANK.BO", "ICICIBANK.BO", "SBIN.BO", "AXISBANK.BO", \
            "BAJFINANCE.BO", "BHARTIARTL.BO", "RELIANCE.BO", "TCS.BO", "TITAN.BO"]
 
-interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
+interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 45)
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -30, adx = 0)
 
 sell_params = DecisionParams(rsi_level = 50, min_obv_slope = 20, max_obv_slope = 23, \

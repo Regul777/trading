@@ -188,3 +188,17 @@ class Indicator:
     df2['R3'] = R3
     df2['S3'] = S3
     return df2  
+
+  def MACD(DF, a, b, c):
+    # a: fast moving average
+    # b: slow moving average
+    # c: period of moving average for the signal line (Fast - Slow)
+    """function to calculate MACD
+       typical values a = 12; b = 26, c = 9"""
+    df = DF.copy()
+    df["MA_Fast"]=df["Adj Close"].ewm(span = a, min_periods = a).mean()
+    df["MA_Slow"]=df["Adj Close"].ewm(span = b, min_periods = b).mean()
+    df["MACD"]=df["MA_Fast"] - df["MA_Slow"]
+    df["Signal"]=df["MACD"].ewm(span = c, min_periods = c).mean()
+    df.dropna(inplace = True)
+    return (df["MACD"],df["Signal"])

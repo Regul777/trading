@@ -85,12 +85,19 @@ class interday_testing_helper :
     
       # Merging the ADX data
       ohlc_renko[ticker] = ohlc_renko[ticker].merge(adx_frame.loc[:,["Date","ADX"]], how="outer", on="Date")
+      
+      # Putting the MACD data into the ohlc_renko frame
+      ohlc_renko[ticker]["macd"]= Indicator.MACD(ohlc_renko[ticker], 12, 26, 9)[0]
+      ohlc_renko[ticker]["macd_sig"]= Indicator.MACD(ohlc_renko[ticker],12, 26, 9)[1]
+      ohlc_renko[ticker]["macd_slope"] = Indicator.slope(ohlc_renko[ticker]["macd"], 5)
+      ohlc_renko[ticker]["macd_sig_slope"] = Indicator.slope(ohlc_renko[ticker]["macd_sig"], 5)
+      
       #collated_data[ticker] = ohlc_renko[ticker].iloc[:, [3, 5, 6, 8, 9, 10]]
       collated_data[ticker] = Indicator.Fib_levels(ohlc_renko[ticker])
       #collated_data[ticker] = collated_data[ticker].iloc[:, [3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]]
       #collated_data[ticker] = collated_data[ticker].iloc[:, [0, 5]]
       collated_data[ticker].set_index("Date", inplace = True)
-      collated_data[ticker] = collated_data[ticker].iloc[:, [0, 1, 2, 3,5,7,8,9,10,11,12,13,14,15]]
+      collated_data[ticker] = collated_data[ticker].iloc[:, [0, 1, 2, 3,5,7,8,9,10,11,12,13,14,15,16,17,18,19]]
       tickers_state[ticker] = []
       tickers_ret[ticker] = []
       tickers_signal[ticker] = []
