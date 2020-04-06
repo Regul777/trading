@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from kpis import KPI
+from Common import Current_state_values
 
 # Bundle Run results into the object
 class Strategy_Runner_Result:
@@ -55,17 +56,27 @@ class Strategy_Runner:
                     self.interday_data.tickers_signal[ticker].append('NA')
                     continue;
       
+                bar_num = self.interday_data.ohlc_renko[ticker]['bar_num'][i]
                 rsi = self.interday_data.ohlc_renko[ticker]["RSI"][i]
                 slope = self.interday_data.ohlc_renko[ticker]["obv_slope"][i]
                 adx = self.interday_data.ohlc_renko[ticker]["ADX"][i]
                 fib_support = self.interday_data.collated_data[ticker]['S1'][i]
                 fib_resistance = self.interday_data.collated_data[ticker]['R1'][i]
                 current_price = self.interday_data.ohlc_renko[ticker]["Adj Close"][i]
+                macd = self.interday_data.ohlc_renko[ticker]['macd'][i]
+                macd_signal = self.interday_data.ohlc_renko[ticker]['macd_sig'][i]
+                macd_slope = self.interday_data.ohlc_renko[ticker]['macd_slope'][i]
+                macd_sig_slope = self.interday_data.ohlc_renko[ticker]['macd_sig_slope'][i]
+                current_state_values = Current_state_values(rsi = rsi, bar_num = bar_num, \
+                                                            obv_slope = slope, adx = adx, fib_support = fib_support,\
+                                                            fib_resistance = fib_resistance, current_price = current_price,
+                                                            macd = macd, macd_signal = macd_signal,\
+                                                            macd_slope = macd_slope, macd_signal_slope = macd_sig_slope)
                 
                 # We first maintain a state of signal into "Signal" column before actually
                 # changing the "State" which depends on our previous state ("B" or "S")
-                can_buy_now = (self.strategy.should_buy_now(rsi, slope, adx, fib_support, current_price) == True)
-                can_sell_now = (self.strategy.should_sell_now(rsi, slope, adx, fib_resistance, current_price) == True)
+                can_buy_now = (self.strategy.should_buy_now(current_state_values) == True)
+                can_sell_now = (self.strategy.should_sell_now(current_state_values) == True)
 
                 if (can_buy_now == True and can_sell_now == True) :
                     can_buy_now = False
@@ -111,7 +122,7 @@ class Strategy_Runner:
                         else:
                             profit += 1
                         state += " S(" + str(math.floor(buy_price)) + "->" + str(math.floor(current_price)) + ")"
-                    elif (self.strategy.should_sell_based_on_stop_loss(current_price, self.buy_list[0], adx)) :
+                    elif (self.strategy.should_sell_based_on_stop_loss(current_state_values, self.buy_list[0])) :
                         # We set the stop loss at strategy.sell_params.stop_loss_pct % of the buy price.
                         # Also, making sure if there is a strong falling trend or not
                         buy_price = heapq.heappop(self.buy_list)
