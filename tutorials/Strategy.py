@@ -11,6 +11,9 @@ Created on Sun Apr  5 00:01:01 2020
 # Specify buy, sell and common params 
 # Specify run specific data in Strategy_Runner object
 # Call Strategy_Runner.Run()
+# TODO: Create an interface/base class for strategy and let the new strategies
+# override the base behaviour. Present common thing across strategies is the sell based
+# on the stop loss criteria
 class Strategy1:
     def __init__(self, buy_params, sell_params, adx_threshold_for_fib_buy,\
                  adx_threshold_for_fib_sell, enable_using_fib_retraction) :
