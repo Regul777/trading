@@ -129,7 +129,6 @@ class interday_testing_helper :
           second_last_day_data = ticker_data.head(1)
           prev_close_price = second_last_day_data['Adj Close'][0]
           signal = last_day_data['Signal'][0]
-          print("prev_close: ", prev_close_price)
           if (signal == 'S' or signal == 'B') :
               if (signal == 'S') :
                   sell_prev_price.append(prev_close_price)
@@ -158,12 +157,12 @@ class interday_testing_helper :
 
       if (len(sell_stocks) > 0):
           stocks = ""
-          for ticker in buy_stocks:
+          for ticker in sell_stocks:
               message = ticker
-              message += " Current: " + str(math.floor(buy_stocks[ticker]['Adj Close']))
-              message += " Prev: " + str(math.floor(buy_stocks[ticker]['Prev_Close']))
-              message += " RSI: " + str(math.floor(buy_stocks[ticker]['RSI']))
-              message += " ADX: " + str(math.floor(buy_stocks[ticker]['ADX']))
+              message += " Current: " + str(math.floor(sell_stocks[ticker]['Adj Close']))
+              message += " Prev: " + str(math.floor(sell_stocks[ticker]['Prev_Close']))
+              message += " RSI: " + str(math.floor(sell_stocks[ticker]['RSI']))
+              message += " ADX: " + str(math.floor(sell_stocks[ticker]['ADX']))
               stocks += message
               stocks += "\n"
           smtp_client.send_mail("niku2907@gmail.com", stocks, "Sell these stocks")
@@ -175,7 +174,6 @@ class interday_testing_helper :
           last_days_ticker_data = ticker_data.tail(1)
           last_days_data[ticker] = last_days_ticker_data
     
-      print("Last day data: ", last_days_data)
       ticker_RS_levels = ""
       for ticker in tickers:
           ticker_data = last_days_data[ticker]
