@@ -176,6 +176,7 @@ class interday_testing_helper :
     
       ticker_RS_levels = ""
       for ticker in tickers:
+          print("Ticker: ", ticker)
           ticker_data = last_days_data[ticker]
           prev_high = ticker_data['High'][0]
           prev_low = ticker_data['Low'][0]
@@ -187,7 +188,7 @@ class interday_testing_helper :
               print("Assuming stock to be in downtrend while calculating fibonacci levels")
         
           fib_levels = fib_levels_helper.get(prev_high, prev_low, uptrend)
-          ticker_RS_levels = ticker
+          ticker_RS_levels += ticker
           ticker_RS_levels += " (R1 = " + str(math.floor(fib_levels.RS1.resistance)) + " ,S1 = " + str(math.floor(fib_levels.RS1.support)) + ") "
           ticker_RS_levels += " (R2 = " + str(math.floor(fib_levels.RS2.resistance)) + " ,S2 = " + str(math.floor(fib_levels.RS2.support)) + ") "
           ticker_RS_levels += " (R3 = " + str(math.floor(fib_levels.RS3.resistance)) + " ,S3 = " + str(math.floor(fib_levels.RS3.support)) + ") "
