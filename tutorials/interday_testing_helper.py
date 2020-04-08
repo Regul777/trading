@@ -8,8 +8,11 @@ Created on Thu Apr  2 14:05:47 2020
 
 import copy
 import datetime
+import math
 import pandas_datareader.data as pdr
 
+from fibonacci_retracement import fib_levels_helper
+from mail_utils import smtp_client
 from indicators import Indicator
 
 class interday_data:
@@ -104,4 +107,91 @@ class interday_testing_helper :
       
     return interday_data(tickers, collated_data, ohlc_renko, tickers_ret, tickers_state, tickers_signal)
 
+  @staticmethod
+  def get_last_two_days_data(ohlc_data, tickers) :
+      last_two_days_data = {}
+      for ticker in tickers:
+          ticker_data = ohlc_data[ticker].iloc[:, [3, 8, 9, 16]]
+          last_two_days_ticker_data = ticker_data.tail(2)
+          last_two_days_data[ticker] = last_two_days_ticker_data
+      return last_two_days_data
+  
+  @staticmethod
+  def get_interesting_stocks(ohlc_data, tickers) :
+      last_two_days_data = interday_testing_helper.get_last_two_days_data(ohlc_data, tickers)
+      buy_stocks = {}
+      sell_stocks = {}
+      buy_prev_price = []
+      sell_prev_price = []
+      for ticker in tickers:
+          ticker_data = last_two_days_data[ticker]
+          last_day_data = ticker_data.tail(1)
+          second_last_day_data = ticker_data.head(1)
+          prev_close_price = second_last_day_data['Adj Close'][0]
+          signal = last_day_data['Signal'][0]
+          print("prev_close: ", prev_close_price)
+          if (signal == 'S' or signal == 'B') :
+              if (signal == 'S') :
+                  sell_prev_price.append(prev_close_price)
+                  sell_stocks[ticker] = last_day_data
+                  sell_stocks[ticker]['Prev_Close'] = prev_close_price
+              else :
+                  buy_prev_price.append(prev_close_price)
+                  buy_stocks[ticker] = last_day_data
+                  buy_stocks[ticker]['Prev_Close'] = prev_close_price
+      return buy_stocks, sell_stocks
+  
+  @staticmethod
+  def send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers):
+      buy_stocks, sell_stocks = interday_testing_helper.get_interesting_stocks(cummulative_ohlc_data, tickers)
+      if (len(buy_stocks) > 0):
+          stocks = ""
+          for ticker in buy_stocks:
+              message = ticker
+              message += " Current: " + str(math.floor(buy_stocks[ticker]['Adj Close']))
+              message += " Prev: " + str(math.floor(buy_stocks[ticker]['Prev_Close']))
+              message += " RSI: " + str(math.floor(buy_stocks[ticker]['RSI']))
+              message += " ADX: " + str(math.floor(buy_stocks[ticker]['ADX']))
+              stocks += message
+              stocks += "\n"
+          smtp_client.send_mail("niku2907@gmail.com", stocks, "Buy these stocks")
+
+      if (len(sell_stocks) > 0):
+          stocks = ""
+          for ticker in buy_stocks:
+              message = ticker
+              message += " Current: " + str(math.floor(buy_stocks[ticker]['Adj Close']))
+              message += " Prev: " + str(math.floor(buy_stocks[ticker]['Prev_Close']))
+              message += " RSI: " + str(math.floor(buy_stocks[ticker]['RSI']))
+              message += " ADX: " + str(math.floor(buy_stocks[ticker]['ADX']))
+              stocks += message
+              stocks += "\n"
+          smtp_client.send_mail("niku2907@gmail.com", stocks, "Sell these stocks")
+          
+      # Next day's Ri/Si is also an interesting data point
+      last_days_data = {}
+      for ticker in tickers:
+          ticker_data = cummulative_ohlc_data[ticker]
+          last_days_ticker_data = ticker_data.tail(1)
+          last_days_data[ticker] = last_days_ticker_data
     
+      print("Last day data: ", last_days_data)
+      ticker_RS_levels = ""
+      for ticker in tickers:
+          ticker_data = last_days_data[ticker]
+          prev_high = ticker_data['High'][0]
+          prev_low = ticker_data['Low'][0]
+          uptrend = False
+          if (ticker_data['bar_num'][0] >= 4) :
+              print("Assuming stock to be in uptrend while calculating fibonacci levels")
+              uptrend = True
+          else :
+              print("Assuming stock to be in downtrend while calculating fibonacci levels")
+        
+          fib_levels = fib_levels_helper.get(prev_high, prev_low, uptrend)
+          ticker_RS_levels = ticker
+          ticker_RS_levels += " (R1 = " + str(math.floor(fib_levels.RS1.resistance)) + " ,S1 = " + str(math.floor(fib_levels.RS1.support)) + ") "
+          ticker_RS_levels += " (R2 = " + str(math.floor(fib_levels.RS2.resistance)) + " ,S2 = " + str(math.floor(fib_levels.RS2.support)) + ") "
+          ticker_RS_levels += " (R3 = " + str(math.floor(fib_levels.RS3.resistance)) + " ,S3 = " + str(math.floor(fib_levels.RS3.support)) + ") "
+          ticker_RS_levels += "\n"
+      smtp_client.send_mail("niku2907@gmail.com", ticker_RS_levels, "Potential R/S levels for next days")

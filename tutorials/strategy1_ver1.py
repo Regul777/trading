@@ -33,9 +33,7 @@ tickers = ["ASIANPAINT.BO", "BAJAJ-AUTO.BO",
            "NESTLEIND.BO", "NTPC.BO", "ONGC.BO", "POWERGRID.BO",
            "SUNPHARMA.BO", "TATASTEEL.BO", "TECHM.BO", "ULTRACEMCO.BO"]
 
-tickers = ["INDUSINDBK.BO", "YESBANK.BO"]
-
-interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 730, delta = 45)
+interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 730, delta = 0)
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -10, adx = 23)
 
 sell_params = DecisionParams(rsi_level = 45, min_obv_slope = 30, max_obv_slope = 50, \
@@ -45,7 +43,7 @@ strategy = Strategy1(buy_params = buy_params, sell_params = sell_params, \
                      adx_threshold_for_fib_buy = 50, adx_threshold_for_fib_sell = 50, \
                      enable_using_fib_retraction = True)
 
-strategy_runner = Strategy_Runner(strategy, tickers, interday_data, num_simultaneous_buy = 1)
+strategy_runner = Strategy_Runner(strategy, tickers, interday_data, num_simultaneous_buy = 100)
 result = strategy_runner.Run()
 
 # Adding following variables as Spyder is not able to unpack user defined datatype and hence
