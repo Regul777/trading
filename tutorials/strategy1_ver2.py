@@ -31,10 +31,8 @@ from interday_testing_helper import interday_testing_helper
 from Strategy import Strategy1
 from Strategy_Runner import Strategy_Runner
 
-# Adding INDUSINDBK and INFY also to this list but I have not checked the buy_params and sell_params
-# best tuned for these
-tickers = ["HDFCBANK.BO", "ICICIBANK.BO", "SBIN.BO", "AXISBANK.BO", \
-           "BAJFINANCE.BO", "BHARTIARTL.BO", "RELIANCE.BO", "TCS.BO", "TITAN.BO", "INDUSINDBK.BO", "INFY.BO"]
+tickers = ["BAJFINANCE.BO", "HDFC.BO", "ICICIBANK.BO", "RELIANCE.BO", "TITAN.BO"]
+
 
 interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -30, adx = 0)
@@ -46,7 +44,7 @@ strategy = Strategy1(buy_params = buy_params, sell_params = sell_params, \
                      adx_threshold_for_fib_buy = 50, adx_threshold_for_fib_sell = 50, \
                      enable_using_fib_retraction = True)
 
-strategy_runner = Strategy_Runner(strategy, tickers, interday_data, num_simultaneous_buy = 10)
+strategy_runner = Strategy_Runner(strategy, tickers, interday_data, num_simultaneous_buy = 100)
 result = strategy_runner.Run()
 
 # Adding following variables as Spyder is not able to unpack user defined datatype and hence
@@ -64,4 +62,4 @@ individual_dd = result.individual_dd
 num_profit = result.num_profits
 num_loss = result.num_losses
 resultant_money = result.resultant_money
-interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers)
+interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, is_v1 = False)

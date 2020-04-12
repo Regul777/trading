@@ -27,11 +27,12 @@ from interday_testing_helper import interday_testing_helper
 from Strategy import Strategy1
 from Strategy_Runner import Strategy_Runner
 
-tickers = ["ASIANPAINT.BO", "BAJAJ-AUTO.BO",
-           "HCLTECH.BO", "HEROMOTOCO.BO", "HINDUNILVR.BO", 
-           "INDUSINDBK.BO", "INFY.BO", "ITC.BO", "KOTAKBANK.BO", "LT.BO", "M&M.BO", "MARUTI.BO",
-           "NESTLEIND.BO", "NTPC.BO", "ONGC.BO", "POWERGRID.BO",
-           "SUNPHARMA.BO", "TATASTEEL.BO", "TECHM.BO", "ULTRACEMCO.BO"]
+tickers = ["ASIANPAINT.BO", "AXISBANK.BO", "BAJAJ-AUTO.BO", "BHARTIARTL.BO",
+           "HCLTECH.BO",    "HDFCBANK.BO", "HEROMOTOCO.BO", "HINDUNILVR.BO", 
+           "INDUSINDBK.BO", "INFY.BO",     "ITC.BO",        "KOTAKBANK.BO",  "LT.BO",
+           "M&M.BO",        "MARUTI.BO",   "NESTLEIND.BO",  "NTPC.BO",       "ONGC.BO", 
+           "POWERGRID.BO", "SBIN.BO",       "SUNPHARMA.BO",  "TATASTEEL.BO", 
+           "TCS.BO",        "TECHM.BO",      "ULTRACEMCO.BO"]
 
 interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 730, delta = 0)
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -10, adx = 23)
