@@ -34,7 +34,7 @@ tickers = ["ASIANPAINT.BO", "AXISBANK.BO", "BAJAJ-AUTO.BO", "BHARTIARTL.BO",
            "POWERGRID.BO", "SBIN.BO",       "SUNPHARMA.BO",  "TATASTEEL.BO", 
            "TCS.BO",        "TECHM.BO",      "ULTRACEMCO.BO"]
 
-interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 730, delta = 0)
+interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -10, adx = 23)
 
 sell_params = DecisionParams(rsi_level = 45, min_obv_slope = 30, max_obv_slope = 50, \
@@ -62,5 +62,6 @@ individual_dd = result.individual_dd
 num_profit = result.num_profits
 num_loss = result.num_losses
 resultant_money = result.resultant_money
-
-interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers)
+holdings_data = result.holdings_data
+holdings_data = holdings_data.sort_values("Pct hold")
+interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data)

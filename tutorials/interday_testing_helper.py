@@ -141,8 +141,9 @@ class interday_testing_helper :
       return buy_stocks, sell_stocks
   
   @staticmethod
-  def send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, is_v1 = True):
+  def send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data, is_v1 = True):
       buy_stocks, sell_stocks = interday_testing_helper.get_interesting_stocks(cummulative_ohlc_data, tickers)
+      holdings_data = holdings_data.to_dict()
       if (len(buy_stocks) > 0):
           stocks = ""
           for ticker in buy_stocks:
@@ -151,6 +152,7 @@ class interday_testing_helper :
               message += " Prev: " + str(math.floor(buy_stocks[ticker]['Prev_Close']))
               message += " RSI: " + str(math.floor(buy_stocks[ticker]['RSI']))
               message += " ADX: " + str(math.floor(buy_stocks[ticker]['ADX']))
+              message += " Hold pct: " + str(math.floor(holdings_data['Pct hold'][ticker]))
               stocks += message
               stocks += "\n"
           subject = "Buy these stocks"

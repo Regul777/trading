@@ -18,7 +18,8 @@ from Common import Current_state_values
 class Strategy_Runner_Result:
     def __init__(self, num_profits, num_losses, cummulative_cagr, \
                  cummulative_sharpe_ratio, cummulative_dd, modified_interday_data,\
-                 individual_cagr, individual_sharpe_ratio, individual_dd, resultant_money) :
+                 individual_cagr, individual_sharpe_ratio, individual_dd, resultant_money, \
+                 holdings_data) :
         self.num_profits = num_profits
         self.num_losses = num_losses
         self.cummulative_cagr = cummulative_cagr
@@ -29,6 +30,7 @@ class Strategy_Runner_Result:
         self.individual_sharpe_ratio = individual_sharpe_ratio
         self.individual_dd = individual_dd
         self.resultant_money = resultant_money
+        self.holdings_data = holdings_data  
         
 # TODO: Make Strategy Runner a generic class which can take any kind of data
 # Presently it's tightly coupled to data havong "RSI", "ADX", "R*", "S*" etc. params
@@ -45,8 +47,12 @@ class Strategy_Runner:
         profit = 0
         loss = 0
         resultant_money = {}
+        num_positions_holding = []
+        num_buys = []
         for ticker in self.tickers:
             resultant_money_for_this_ticker = 1
+            num_positions_open_ticker = 0
+            num_buys_ticker = 0
             print("calculating daily returns for ", ticker)
             self.buy_list.clear()
             for i in range(len(self.interday_data.ohlc_renko[ticker])):
@@ -108,6 +114,8 @@ class Strategy_Runner:
                         # Buying at current_price
                         heapq.heappush(self.buy_list, current_price)
                         state += 'B'
+                        num_positions_open_ticker += 1
+                        num_buys_ticker += 1
 
                 # If we have bought atleast once
                 if (len(self.buy_list) > 0) :
@@ -122,6 +130,7 @@ class Strategy_Runner:
                         else:
                             profit += 1
                         state += " S(" + str(math.floor(buy_price)) + "->" + str(math.floor(current_price)) + ")"
+                        num_positions_open_ticker -= 1
                     elif (self.strategy.should_sell_based_on_stop_loss(current_state_values, self.buy_list[0])) :
                         # We set the stop loss at strategy.sell_params.stop_loss_pct % of the buy price.
                         # Also, making sure if there is a strong falling trend or not
@@ -130,6 +139,7 @@ class Strategy_Runner:
                         state += " S(" + str(math.floor(buy_price)) + "->" + str(math.floor(current_price)) + ")"
                         #print("Return booked : ", current_price / buy_price)
                         loss += 1
+                        num_positions_open_ticker -= 1
                     else :
                         if (state.find('B') != -1) :
                             state += " Hold"
@@ -144,10 +154,17 @@ class Strategy_Runner:
                 self.interday_data.tickers_ret[ticker].append(ret)
                 self.interday_data.tickers_state[ticker].append(state) 
             resultant_money[ticker] = resultant_money_for_this_ticker
+            num_positions_holding.append(num_positions_open_ticker)
+            num_buys.append(num_buys_ticker)
             self.interday_data.ohlc_renko[ticker]["ret"] = np.array(self.interday_data.tickers_ret[ticker])
             self.interday_data.ohlc_renko[ticker]["State"] = np.array(self.interday_data.tickers_state[ticker])
             self.interday_data.ohlc_renko[ticker]["Signal"] = np.array(self.interday_data.tickers_signal[ticker])
             self.interday_data.ohlc_renko[ticker].set_index("Date", inplace = True)
+        
+        list_of_tuples = list(zip(self.tickers, num_positions_holding, num_buys))
+        holdings_data = pd.DataFrame(list_of_tuples, columns = ['Ticker', 'Open positions', 'Total buys'])
+        holdings_data['Pct hold'] = (holdings_data['Open positions'] / holdings_data['Total buys']) * 100
+        holdings_data.set_index("Ticker", inplace = True)
         # calculating overall strategy's KPIs
         strategy_df = pd.DataFrame()
         for ticker in self.tickers:
@@ -168,4 +185,4 @@ class Strategy_Runner:
             max_drawdown[ticker] =  KPI.max_dd(self.interday_data.ohlc_renko[ticker])
         
         return Strategy_Runner_Result(profit, loss, new_cagr, new_sharpe, new_dd, self.interday_data,
-                                      cagr, sharpe_ratios, max_drawdown, resultant_money)
+                                      cagr, sharpe_ratios, max_drawdown, resultant_money, holdings_data)

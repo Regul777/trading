@@ -62,4 +62,7 @@ individual_dd = result.individual_dd
 num_profit = result.num_profits
 num_loss = result.num_losses
 resultant_money = result.resultant_money
-interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, is_v1 = False)
+holdings_data = result.holdings_data
+holdings_data = holdings_data.sort_values("Pct hold")
+interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, \
+                                                         holdings_data, is_v1 = False)
