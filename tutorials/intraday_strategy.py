@@ -33,7 +33,7 @@ key = "055FVQ7KAZK2L85H" # niku2907@gmail.com
 key2 = "LTP4AYWJYLX3OE90" # nishantgupta2907@gmail.com
 key3 = "GFQ9OUJN122ARRXF" # nishant.gupta.trading@gmail.com
 
-tickers = ["ICICIBANK.BO"]
+tickers = ["ONGC.BO"]
 ohlc_intraday = {} # directory with ohlc value for each stock            
 ts = TimeSeries(key = key, output_format = 'pandas')
     
@@ -49,13 +49,13 @@ while len(tickers) != 0 and attempt <= 5:
     for i in range(len(tickers)):
         try:
             ohlc_intraday[tickers[i]], meta_data = ts.get_intraday(symbol = tickers[i],\
-                                                                   interval='1min',\
+                                                                   interval='15min',\
                                                                    outputsize='full')            
             ohlc_intraday[tickers[i]] = massage_ohlv_data(ohlc_intraday[tickers[i]], meta_data, tickers[i])
             
             # Getting the 30 min time frame data as well
             ohlc_intraday_30_mins[tickers[i]], meta_data = ts.get_intraday(symbol = tickers[i],\
-                                                                           interval='30min',\
+                                                                           interval='60min',\
                                                                            outputsize='full')
             ohlc_intraday_30_mins[tickers[i]] = massage_ohlv_data(ohlc_intraday_30_mins[tickers[i]], meta_data, tickers[i])            
             drop.append(tickers[i])      
@@ -127,3 +127,4 @@ for ticker in tickers:
     collated_data[ticker] = ohlc_intraday[ticker].merge(ohlc_intraday_30_mins[ticker].loc[:,["Date","long_trend"]], \
                                                         how="outer", on="Date")
     collated_data[ticker]["long_trend"].fillna(method='ffill', inplace=True)
+    collated_data[ticker].dropna(inplace = True)

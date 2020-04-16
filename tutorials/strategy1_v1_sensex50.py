@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Apr  5 01:22:28 2020
+Created on Thu Apr 16 23:50:03 2020
 
 @author: nishant.gupta
 """
@@ -27,31 +27,28 @@ from interday_testing_helper import interday_testing_helper
 from Strategy import Strategy1
 from Strategy_Runner import Strategy_Runner
 
-tickers = ["ASIANPAINT.BO",\
-           "AXISBANK.BO",\
-           "BAJAJ-AUTO.BO",\
-           "BHARTIARTL.BO",\
-           "HCLTECH.BO", \
-           "HDFCBANK.BO",\
-           "HEROMOTOCO.BO",\
+tickers = ["ADANIPORTS.BO",\
+           "BAJAJFINSV.BO",\
+           "BPCL.BO",\
+           "BRITANNIA.BO",\
+           "CIPLA.BO",\
+           "COALINDIA.BO",\
+           "DRREDDY.BO",\
+           "EICHERMOT.BO",\
+           "GAIL.BO",\
+           "GODREJCP.BO",\
+           "GRASIM.BO",\
+           "HINDALCO.BO",\
            "HINDUNILVR.BO",\
-           "INDUSINDBK.BO",\
-           "INFY.BO",\
-           "ITC.BO",\
-           "KOTAKBANK.BO",\
-           "LT.BO",\
-           "M&M.BO",\
-           "MARUTI.BO",\
-           "NESTLEIND.BO",\
-           "NTPC.BO",\
-           "ONGC.BO",\
-           "POWERGRID.BO",\
-           "SBIN.BO",\
-           "SUNPHARMA.BO",\
-           "TATASTEEL.BO",\
-           "TCS.BO",\
-           "TECHM.BO",\
-           "ULTRACEMCO.BO"]
+           "IBULHSGFIN.BO",\
+           "IOC.BO",\
+           "JSWSTEEL.BO",\
+           "TATAMOTORS.BO",\
+           "TATAMTRDVR.BO",\
+           "UPL.BO", \
+           "VEDL.BO",\
+           "WIPRO.BO",\
+           "YESBANK.BO"]
 
 interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -10, adx = 23)
@@ -83,5 +80,5 @@ num_loss = result.num_losses
 resultant_money = result.resultant_money
 holdings_data = result.holdings_data
 holdings_data = holdings_data.sort_values("Pct hold")
-interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data,\
-                                                         version = "V1")
+interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data,
+                                                         version = "Sensex50")

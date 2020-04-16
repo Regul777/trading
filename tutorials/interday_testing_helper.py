@@ -141,7 +141,7 @@ class interday_testing_helper :
       return buy_stocks, sell_stocks
   
   @staticmethod
-  def send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data, is_v1 = True):
+  def send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data, version):
       buy_stocks, sell_stocks = interday_testing_helper.get_interesting_stocks(cummulative_ohlc_data, tickers)
       holdings_data = holdings_data.to_dict()
       if (len(buy_stocks) > 0):
@@ -155,11 +155,7 @@ class interday_testing_helper :
               message += " Hold pct: " + str(math.floor(holdings_data['Pct hold'][ticker]))
               stocks += message
               stocks += "\n"
-          subject = "Buy these stocks"
-          if (is_v1 == True) :
-              subject += "(V1)"
-          else:
-              subject += "(V2)"
+          subject = "Buy these stocks " +  version
           smtp_client.send_mail("niku2907@gmail.com", stocks, subject)
 
       if (len(sell_stocks) > 0):
@@ -172,11 +168,7 @@ class interday_testing_helper :
               message += " ADX: " + str(math.floor(sell_stocks[ticker]['ADX']))
               stocks += message
               stocks += "\n"
-          subject = "Sell these stocks"
-          if (is_v1 == True) :
-              subject += "(V1)"
-          else:
-              subject += "(V2)"
+          subject = "Sell these stocks " + version
           smtp_client.send_mail("niku2907@gmail.com", stocks, subject)
           
       # Next day's Ri/Si is also an interesting data point
