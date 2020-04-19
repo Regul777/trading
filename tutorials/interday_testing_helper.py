@@ -73,8 +73,11 @@ class interday_testing_helper :
       adx = Indicator.ADX(df[ticker], 14)
       adx.index.names = ['Date']
       adx_frame = adx.to_frame()
-      adx_frame.reset_index(inplace=True)
+      adx_frame.reset_index(inplace = True)
       adx_frame.column = ["Date", "ADX"]
+      
+      atr = Indicator.ATR(df[ticker], 14)
+      atr.column = ["Date", "ATR"]
     
       # "bar_num" column is based on renko chart which has brick size based on ATR (see renko function above)
       ohlc_renko[ticker]["bar_num"].fillna(method='ffill', inplace=True)
@@ -89,9 +92,12 @@ class interday_testing_helper :
       # Merging the ADX data
       ohlc_renko[ticker] = ohlc_renko[ticker].merge(adx_frame.loc[:,["Date","ADX"]], how="outer", on="Date")
       
+      # Merging the ATR data
+      ohlc_renko[ticker] = ohlc_renko[ticker].merge(atr.loc[:,["Date","ATR"]], how="outer", on="Date")
+      
       # Putting the MACD data into the ohlc_renko frame
       ohlc_renko[ticker]["macd"]= Indicator.MACD(ohlc_renko[ticker], 12, 26, 9)[0]
-      ohlc_renko[ticker]["macd_sig"]= Indicator.MACD(ohlc_renko[ticker],12, 26, 9)[1]
+      ohlc_renko[ticker]["macd_sig"] = Indicator.MACD(ohlc_renko[ticker],12, 26, 9)[1]
       ohlc_renko[ticker]["macd_slope"] = Indicator.slope(ohlc_renko[ticker]["macd"], 5)
       ohlc_renko[ticker]["macd_sig_slope"] = Indicator.slope(ohlc_renko[ticker]["macd_sig"], 5)
       
@@ -111,10 +117,45 @@ class interday_testing_helper :
   def get_last_two_days_data(ohlc_data, tickers) :
       last_two_days_data = {}
       for ticker in tickers:
-          ticker_data = ohlc_data[ticker].iloc[:, [3, 8, 9, 16]]
+          # 3: Adj Close, 8: RSI, 9: ADX, 10: ATR, 17: Signal
+          ticker_data = ohlc_data[ticker].iloc[:, [3, 8, 9, 10, 17]]
           last_two_days_ticker_data = ticker_data.tail(2)
           last_two_days_data[ticker] = last_two_days_ticker_data
       return last_two_days_data
+  
+  @staticmethod
+  def get_latest_day_data(ohlc_data, holdings_data, tickers) :
+      df = ohlc_data.copy()
+      ticker_0 = tickers[0]
+      
+      # First get the 1st column and combine data for all the other tickers
+      # into the same frame
+      first_ticker_data = df[ticker_0].tail(1)
+      tickers_data = copy.deepcopy(first_ticker_data)
+      tickers_data['Ticker'] = ticker_0
+      tickers_data.reset_index(inplace = True)
+      tickers_data.set_index("Ticker", inplace = True)
+      tickers_data.drop(['Date'], axis = 1, inplace = True)
+      for i in range(1, len(tickers)):
+          ticker = tickers[i]
+          latest_ticker_data = df[ticker].tail(1)
+          latest_ticker_data['Ticker'] = ticker
+          latest_ticker_data.reset_index(inplace = True)
+          latest_ticker_data.set_index("Ticker", inplace = True)
+          latest_ticker_data.drop(['Date'], axis = 1, inplace = True)
+          tickers_data = tickers_data.append(latest_ticker_data)
+    
+      tickers_data['ATR %'] = (tickers_data['ATR'] / tickers_data['Adj Close']) * 100
+      tickers_data = tickers_data.sort_values("ATR %", ascending = False)
+      
+      # 0: Opem, 1: High, 2: Low, 3: Adj Close, 4 : Volume, 5: bar_num, 
+      # 17: Signal, 18: ATR%
+      tickers_data = tickers_data.iloc[:, [0, 1, 2, 3, 4, 5, 17, 18]]
+      holdings_data.reset_index(inplace = True)
+      tickers_data.reset_index(inplace = True)
+      tickers_data = tickers_data.merge(holdings_data.loc[:,["Ticker", "Pct hold"]], how = "outer", on = "Ticker")
+      tickers_data.set_index("Ticker", inplace = True)
+      return tickers_data
   
   @staticmethod
   def get_interesting_stocks(ohlc_data, tickers) :
@@ -153,6 +194,7 @@ class interday_testing_helper :
               message += " RSI: " + str(math.floor(buy_stocks[ticker]['RSI']))
               message += " ADX: " + str(math.floor(buy_stocks[ticker]['ADX']))
               message += " Hold pct: " + str(math.floor(holdings_data['Pct hold'][ticker]))
+              message += " ATR: " + str(math.floor(buy_stocks[ticker]['ATR']))
               stocks += message
               stocks += "\n"
           subject = "Buy these stocks " +  version
@@ -166,6 +208,7 @@ class interday_testing_helper :
               message += " Prev: " + str(math.floor(sell_stocks[ticker]['Prev_Close']))
               message += " RSI: " + str(math.floor(sell_stocks[ticker]['RSI']))
               message += " ADX: " + str(math.floor(sell_stocks[ticker]['ADX']))
+              message += " ATR: " + str(math.floor(sell_stocks[ticker]['ATR']))
               stocks += message
               stocks += "\n"
           subject = "Sell these stocks " + version

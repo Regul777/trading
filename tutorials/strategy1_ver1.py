@@ -85,3 +85,7 @@ holdings_data = result.holdings_data
 holdings_data = holdings_data.sort_values("Pct hold")
 interday_testing_helper.send_mail_for_interesting_stocks(cummulative_ohlc_data, tickers, holdings_data,\
                                                          version = "V1")
+
+latest_data = interday_testing_helper.get_latest_day_data(cummulative_ohlc_data, holdings_data, tickers)
+print("Latest Data")
+print(latest_data)
