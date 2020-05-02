@@ -52,7 +52,7 @@ class Indicator:
         df2 = Renko(df)
         
         # TODO: Investigate what brick size is good
-        df2.brick_size = max(5, round(Indicator.ATR(DF, 120)["ATR"][-1], 0))
+        df2.brick_size = max(5, round(Indicator.ATR(DF, 14)["ATR"][-1], 0))
         print("Brick size: ", df2.brick_size)
         renko_df = df2.get_ohlc_data()
         renko_df["bar_num"] = np.where(renko_df["uptrend"] == True, 1, np.where(renko_df["uptrend"] == False, -1, 0))
