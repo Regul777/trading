@@ -41,7 +41,3 @@ class income_statement_getter:
         else:
             self.income_interest = string_util.get_processed_data(driver.find_xpath(element_xpath = income_interest_xtag))
             print("Income interest: ", self.income_interest)
-
-url = 'https://financials.morningstar.com/income-statement/is.html?t=500034&region=ind&culture=en-US&platform=sal'
-income_statement = income_statement_getter(url = url)
-income_statement.get_data()

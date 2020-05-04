@@ -6,10 +6,13 @@ Created on Fri May  1 00:02:02 2020
 @author: nishant.gupta
 """
 
-
-import requests
-from bs4 import BeautifulSoup
 import pandas as pd
+import requests
+
+from balance_sheet  import balance_sheet_data_getter
+from bs4 import BeautifulSoup
+from cash_flow_statement import cash_flow_statement_getter
+from income_statement import income_statement_getter
 
 tickers = ["ASIANPAINT.BO",\
            "AXISBANK.BO",\
@@ -116,52 +119,141 @@ ticker_symbol_id = dict({"ASIANPAINT.BO":   500820,\
                          "WIPRO.BO":        507685,\
                          "YESBANK.BO":      532648})
 
-def get_beta_for_ticker(ticker):
-    try:
-        url = 'https://in.finance.yahoo.com/quote/' + ticker + '?p=' + ticker + '&.tsrc=fin-srch'
-        page = requests.get(url)
-        page_content = page.content
-        soup = BeautifulSoup(page_content, "lxml")
-        tabl = soup.find("table", {"class": "W(100%) M(0) Bdcl(c)"})
-        print("Table: ", tabl.text)
-        rows = tabl.find_all("tr")
-        row = rows[1]
-        t_string = str(row)
-        pos_trsdu = t_string.find("Trsdu(0.3s)")
-        if (pos_trsdu != -1):
-            pos_span = t_string.find("</span>", pos_trsdu, len(t_string))
-            temp = t_string[pos_trsdu :pos_span]
-            pos = temp.find(">")
-            beta = temp[pos + 1 : len(temp)]
-            return beta
+class collated_data:
+    def __init__(self, beta, ticker_data):
+        self.beta = beta
+        self.ticker_data = ticker_data
         
-        return -1
-    except:
-        print("Problem scraping beta data for ", ticker)
+class ticker_data_getter:
+    def get_beta_for_ticker(ticker):
+        try:
+            url = 'https://in.finance.yahoo.com/quote/' + ticker + '?p=' + ticker + '&.tsrc=fin-srch'
+            page = requests.get(url)
+            page_content = page.content
+            soup = BeautifulSoup(page_content, "lxml")
+            tabl = soup.find("table", {"class": "W(100%) M(0) Bdcl(c)"})
+            rows = tabl.find_all("tr")
+            row = rows[1]
+            t_string = str(row)
+            pos_trsdu = t_string.find("Trsdu(0.3s)")
+            if (pos_trsdu != -1):
+                pos_span = t_string.find("</span>", pos_trsdu, len(t_string))
+                temp = t_string[pos_trsdu :pos_span]
+                pos = temp.find(">")
+                beta = temp[pos + 1 : len(temp)]
+                return beta
+        
+            return -1
+        except:
+            print("Problem scraping beta data for ", ticker)
+            
+    def financial_data_from_morning_star(ticker):
+        try:
+            ticker_id = ticker_symbol_id[ticker]
+            balance_sheet_url = 'http://financials.morningstar.com/balance-sheet/bs.html?t=' + str(ticker_id) + \
+                                '&region=ind&culture=en-US&platform=sal'
+            balance_sheet = balance_sheet_data_getter(balance_sheet_url)
+            balance_sheet.get_data()
+            
+            income_statement_url = 'https://financials.morningstar.com/income-statement/is.html?t=' + str(ticker_id) + \
+                                   '&region=ind&culture=en-US&platform=sal'
+            income_statement = income_statement_getter(income_statement_url)
+            income_statement.get_data()
+            
+            cash_flow_url = 'http://financials.morningstar.com/cash-flow/cf.html?t=' + str(ticker_id) + \
+                            '&region=ind&culture=en-US&platform=sal'
+            cash_flow_statement = cash_flow_statement_getter(cash_flow_url)
+            cash_flow_statement.get_data()
+            
+            return balance_sheet, income_statement, cash_flow_statement
+        except:
+            print("Problem in scraping financial data for ", ticker)
+            
 
-def get_historical_revenue_for_ticker(ticker_id):
-    try:
-        url = 'http://financials.morningstar.com/income-statement/is.html?t=' + str(ticker_id) + '&region=ind&culture=en-US&platform=sal'
-        print("URL: ", url)
-        page = requests.get(url)
-        page_content = page.content
-        soup = BeautifulSoup(page_content, 'html.parser')
-        print("Content: ", page_content)
-        tabl = soup.find_all("div", {"class": "main main10 "})
-        print("Table: ", tabl)
-    except:
-        print("Problem scraping revenue data for ", ticker)
+    def get_data_for_all_tickers(all_tickers):
+        Years = ["Data", "Y1", "Y2", "Y3", "Y4", "Y5"]
+        tickers = all_tickers
+        collated_data_dict = {}
+        while (len(tickers) > 0):
+            try:
+                for ticker in tickers:
+                    beta_ticker = ticker_data_getter.get_beta_for_ticker(ticker)
+                    print("Beta: ", beta_ticker)
+                    financial_data_ticker = ticker_data_getter.financial_data_from_morning_star(ticker)
+                    balance_sheet = financial_data_ticker[0]
+                    balance_sheet.total_current_assets.insert(0, "Current Assets")
+                    balance_sheet.total_current_liabilities.insert(0, "Current Liabilities")
+                    balance_sheet.total_liabilities.insert(0, "Total liabilites")
+                    balance_sheet.total_stockholders_equity.insert(0, "Stock holder's equity")
+        
+                    income_statement = financial_data_ticker[1]
+                    income_statement.revenue.insert(0, "Revenue")
+                    income_statement.net_income.insert(0, "Net income")
+                    income_statement.income_before_taxes.insert(0, "Income before taxes")
+                    income_statement.provision_taxes.insert(0, "Provision taxes")
+        
+                    cash_flow_statement = financial_data_ticker[2]
+                    cash_flow_statement.free_cash_flow.insert(0, "Free cash flow")
+                    cash_flow_statement.cash_from_operating_activities.insert(0, "Cash from operating activities")
+                    cash_flow_statement.cash_used_for_investing_activities.insert(0, "Cash used for investing activities")
+                    cash_flow_statement.cash_used_for_financial_activities.insert(0, "Cash for financial activities")
+        
+                    st_debt = []
+                    if (len(balance_sheet.short_term_debt) > 0):
+                        balance_sheet.short_term_debt.insert(0, "Short term debt")
+                        st_debt = balance_sheet.short_term_debt
+                    else:
+                        st_debt = ["Short term debt", "-", "-", "-", "-", "-"]
+        
+                    lt_debt = []
+                    if (len(balance_sheet.long_term_debt) > 0):
+                        balance_sheet.long_term_debt.insert(0, "Long term debt")
+                        lt_debt = balance_sheet.long_term_debt
+                    else:
+                        lt_debt = ["Long term debt", "-", "-", "-", "-", "-"]
+        
+                    income_interest = []
+                    if (len(income_statement.income_interest) > 0):
+                        income_statement.income_interest.insert(0, "Income interest")
+                        income_interest = income_statement.income_interest
+                    else:
+                        income_interest = ["Income interest", "-", "-", "-", "-", "-"]
+     
+                    list_tuples = list(zip(balance_sheet.total_current_assets,\
+                                           balance_sheet.total_current_liabilities,\
+                                           balance_sheet.total_liabilities,\
+                                           balance_sheet.total_stockholders_equity,\
+                                           income_statement.revenue,\
+                                           income_statement.net_income,\
+                                           income_statement.income_before_taxes,\
+                                           income_statement.provision_taxes,\
+                                           cash_flow_statement.free_cash_flow,\
+                                           cash_flow_statement.cash_from_operating_activities,\
+                                           cash_flow_statement.cash_used_for_investing_activities,\
+                                           cash_flow_statement.cash_used_for_financial_activities,\
+                                           st_debt,\
+                                           lt_debt,\
+                                           income_interest))
+    
+                    ticker_data_temp = pd.DataFrame(list_tuples)
+                    ticker_data = ticker_data_temp.transpose()
+                    ticker_data.columns = Years
+                    ticker_data.set_index("Data", inplace = True)
+                    collated_data_dict[ticker] = collated_data(beta = beta_ticker,\
+                                                               ticker_data = ticker_data)
+                    tickers.remove(ticker)
+            except:
+                print("Encountered some error while fetching data for ticker: ", ticker)
+                tickers.remove(ticker)
 
-beta_list = []    
-tickers_temp = ["BAJFINANCE.BO"]
-for ticker in tickers_temp:
-    beta_ticker = get_beta_for_ticker(ticker)
-    print("Beta: ", beta_ticker)
-    beta_list.append(beta_ticker)
+        return collated_data_dict
+        
+# tickers_temp = ["INFY.BO", "BAJFINANCE.BO", "NESTLEIND.BO"]
+tickers_collated_data = ticker_data_getter.get_data_for_all_tickers(tickers)
 
 # Now collate the data
-list_of_tuples = list(zip(tickers_temp, beta_list))
-ticker_data = pd.DataFrame(list_of_tuples, columns = ['Ticker', 'Beta'])
-get_historical_revenue_for_ticker(ticker_symbol_id['BAJFINANCE.BO'])
+#list_of_tuples = list(zip(tickers_temp, beta_list))
+#ticker_data = pd.DataFrame(list_of_tuples, columns = ['Ticker', 'Beta'])
+#get_historical_revenue_for_ticker(ticker_symbol_id['BAJFINANCE.BO'])
  
     

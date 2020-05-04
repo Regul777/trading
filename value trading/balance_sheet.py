@@ -73,10 +73,3 @@ class balance_sheet_data_getter:
         self.total_liabilities = string_util.get_processed_data(driver.find_xpath(element_xpath = liab,\
                                                    click_xpath = liab_dd))
         print("Total liabilites: ", self.total_liabilities)
-
-
-url = 'http://financials.morningstar.com/balance-sheet/bs.html?t=500209&region=ind&culture=en-US&platform=sal'
-bal_sheet = balance_sheet_data_getter(url)
-bal_sheet.get_data()
-        
-        

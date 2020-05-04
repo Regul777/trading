@@ -33,8 +33,3 @@ class cash_flow_statement_getter:
         print("Cash for financial activities: ", self.cash_used_for_financial_activities)
         self.cash_from_operating_activities = string_util.get_processed_data(driver.find_xpath(element_xpath = cash_oper_activities_xtag))
         print("Cash from operating activities: ", self.cash_from_operating_activities)
-        
-url = 'http://financials.morningstar.com/cash-flow/cf.html?t=500209&region=ind&culture=en-US&platform=sal'
-income_statement = cash_flow_statement_getter(url = url)
-income_statement.get_data()
-        
