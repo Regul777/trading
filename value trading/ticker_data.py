@@ -6,6 +6,7 @@ Created on Fri May  1 00:02:02 2020
 @author: nishant.gupta
 """
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -15,17 +16,17 @@ from cash_flow_statement import cash_flow_statement_getter
 from income_statement import income_statement_getter
 
 tickers = ["ASIANPAINT.BO",\
-           "AXISBANK.BO",\
+           #"AXISBANK.BO",\
            "BAJAJ-AUTO.BO",\
            "BHARTIARTL.BO",\
            "HCLTECH.BO", \
-           "HDFCBANK.BO",\
+           #"HDFCBANK.BO",\
            "HEROMOTOCO.BO",\
            "HINDUNILVR.BO",\
-           "INDUSINDBK.BO",\
+           #"INDUSINDBK.BO",\
            "INFY.BO",\
            "ITC.BO",\
-           "KOTAKBANK.BO",\
+           #"KOTAKBANK.BO",\
            "LT.BO",\
            "M&M.BO",\
            "MARUTI.BO",\
@@ -33,19 +34,19 @@ tickers = ["ASIANPAINT.BO",\
            "NTPC.BO",\
            "ONGC.BO",\
            "POWERGRID.BO",\
-           "SBIN.BO",\
+           #"SBIN.BO",\
            "SUNPHARMA.BO",\
            "TATASTEEL.BO",\
            "TCS.BO",\
            "TECHM.BO",\
            "ULTRACEMCO.BO",\
-           "BAJFINANCE.BO",\
-           "HDFC.BO",\
-           "ICICIBANK.BO",\
+           #"BAJFINANCE.BO",\
+           #"HDFC.BO",\
+           #"ICICIBANK.BO",\
            "RELIANCE.BO",\
            "TITAN.BO",\
            "ADANIPORTS.BO",\
-           "BAJAJFINSV.BO",\
+           #"BAJAJFINSV.BO",\
            "BPCL.BO",\
            "BRITANNIA.BO",\
            "CIPLA.BO",\
@@ -57,15 +58,15 @@ tickers = ["ASIANPAINT.BO",\
            "GRASIM.BO",\
            "HINDALCO.BO",\
            "HINDUNILVR.BO",\
-           "IBULHSGFIN.BO",\
+           #"IBULHSGFIN.BO",\
            "IOC.BO",\
            "JSWSTEEL.BO",\
            "TATAMOTORS.BO",\
            "TATAMTRDVR.BO",\
            "UPL.BO", \
            "VEDL.BO",\
-           "WIPRO.BO",\
-           "YESBANK.BO"]
+           "WIPRO.BO"]
+           #"YESBANK.BO"]
 
 ticker_symbol_id = dict({"ASIANPAINT.BO":   500820,\
                          "AXISBANK.BO":     532215,\
@@ -119,10 +120,19 @@ ticker_symbol_id = dict({"ASIANPAINT.BO":   500820,\
                          "WIPRO.BO":        507685,\
                          "YESBANK.BO":      532648})
 
+# SBI FD gives a return of 6.5%
+risk_free_return_rate = 6.5
+
+# Sensex has goven a CAGR of 17.1% from 1979-2019. However, to be on a conservative side we are considering it as 15%
+market_return_rate = 15
+
 class collated_data:
-    def __init__(self, beta, ticker_data):
+    def __init__(self, beta, ticker_data, avg_net_margin = 0, avg_fcf_net_income_ratio = 0, return_of_stock = 0):
         self.beta = beta
         self.ticker_data = ticker_data
+        self.avg_net_margin = avg_net_margin
+        self.avg_fcf_net_income_ratio = avg_fcf_net_income_ratio
+        self.return_of_stock = return_of_stock
         
 class ticker_data_getter:
     def get_beta_for_ticker(ticker):
@@ -170,7 +180,7 @@ class ticker_data_getter:
             print("Problem in scraping financial data for ", ticker)
             
 
-    def get_data_for_all_tickers(all_tickers):
+    def get_data_for_all_tickers_all_financial_statements(all_tickers):
         Years = ["Data", "Y1", "Y2", "Y3", "Y4", "Y5"]
         tickers = all_tickers
         collated_data_dict = {}
@@ -247,9 +257,77 @@ class ticker_data_getter:
                 tickers.remove(ticker)
 
         return collated_data_dict
+    
+    def get_data_for_all_tickers(tickers):
+        # This API adds other parameters to the data we got from financial statements
+        # This will be used to compute future cash flow and other futuristic data
+        tickers_data_from_all_statements = ticker_data_getter.get_data_for_all_tickers_all_financial_statements(tickers)
         
-# tickers_temp = ["INFY.BO", "BAJFINANCE.BO", "NESTLEIND.BO"]
-tickers_collated_data = ticker_data_getter.get_data_for_all_tickers(tickers)
+        collated_data_dict = {}
+        # First add slope to all the fields in "ticker_data" to get the trend of all the metrics
+        for ticker in tickers_data_from_all_statements.keys():
+            beta = tickers_data_from_all_statements[ticker].beta
+            ticker_data = tickers_data_from_all_statements[ticker].ticker_data
+            
+            # Calculate the net income margin as Net income / Revenue 
+            ticker_data_temp = ticker_data.transpose()
+            ticker_data_temp['Net income Margin'] = ticker_data_temp['Net income'] / ticker_data_temp['Revenue']
+            ticker_data_temp['FCF / Net income'] = ticker_data_temp['Free cash flow'] / ticker_data_temp['Net income']
+            # Now calculate the average net income margin for these 5 years
+            margin_data = ticker_data_temp['Net income Margin']
+            average_net_income_margin_ticker = np.mean(margin_data)
+            print("Average net margin: ", average_net_income_margin_ticker)
+            
+            # calculate average_free_cash_flow / net income ratio for these 5 years
+            free_cash_flow_to_net_income_data = ticker_data_temp['FCF / Net income']
+            average_free_cash_flow_to_net_income = np.mean(free_cash_flow_to_net_income_data)
+            print("Average fcf/net income: ", average_free_cash_flow_to_net_income)
+            
+            ticker_data = ticker_data_temp.transpose()            
+            collated_data_dict[ticker] = collated_data(beta = beta,\
+                                                       ticker_data = ticker_data,\
+                                                       avg_net_margin = average_net_income_margin_ticker,\
+                                                       avg_fcf_net_income_ratio = average_free_cash_flow_to_net_income)
+        return collated_data_dict
+    
+    def get_data_for_value_investing(tickers):
+        # This API calculates projected future cash flow
+        collated_data_dict = {}
+        tickers_collated_data = ticker_data_getter.get_data_for_all_tickers(tickers)
+        for ticker in tickers_collated_data.keys():
+            average_net_income_margin = tickers_collated_data[ticker].avg_net_margin
+            avg_fcf_net_income_ratio = tickers_collated_data[ticker].avg_fcf_net_income_ratio
+            ticker_data = tickers_collated_data[ticker].ticker_data
+            ticker_data_temp = ticker_data.transpose()
+            # TODO: Remove the following hard coding 4 -> Revenue of Y5
+            starting_revenue = ticker_data_temp['Revenue'][0]
+            latest_revenue = ticker_data_temp['Revenue'][4]
+            # TODO: Remove following hard codings for Y5 and number of years = 5
+            revenue_growth_rate = np.exp((np.log(latest_revenue) - np.log(starting_revenue)) / 5) - 1
+            future_net_income = []
+            for i in range(1, 6):
+                net_income_for_this_year = latest_revenue * average_net_income_margin
+                latest_revenue = latest_revenue * (1 + revenue_growth_rate)
+                future_net_income.append(net_income_for_this_year)
+            ticker_data_temp['Future Net income'] = future_net_income
+            
+            future_cash_flow = []
+            for i in range(1, 6):
+                future_cash_flow.append(future_net_income[i-1] * avg_fcf_net_income_ratio)
+            ticker_data_temp['Future cash flow'] = future_cash_flow
+            ticker_data = ticker_data_temp.transpose()
+            # TODO: Remove following hard codings for Y5 and number of years = 5
+            ticker_data['Slope'] = np.exp((np.log(ticker_data['Y5'].tolist()) - np.log(ticker_data['Y1'].tolist())) / 5) - 1
+            return_of_stock = risk_free_return_rate + tickers_collated_data[ticker].beta * (market_return_rate - risk_free_return_rate)
+            collated_data_dict[ticker] = collated_data(beta = tickers_collated_data[ticker].beta,\
+                                                       ticker_data = ticker_data,\
+                                                       avg_net_margin = average_net_income_margin,\
+                                                       avg_fcf_net_income_ratio = avg_fcf_net_income_ratio,
+                                                       return_of_stock = return_of_stock)
+        return collated_data_dict
+            
+#tickers_temp = ["NESTLEIND.BO"]
+tickers_collated_data = ticker_data_getter.get_data_for_value_investing(tickers)
 
 # Now collate the data
 #list_of_tuples = list(zip(tickers_temp, beta_list))
