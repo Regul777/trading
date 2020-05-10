@@ -17,7 +17,8 @@ class balance_sheet_data_getter:
         self.total_liabilities = []
         self.total_stockholders_equity = []
         self.short_term_debt = []
-        self.long_term_debt = []    
+        self.long_term_debt = []
+        self.common_stock = []
         
     def get_data(self):
         current_liab_dd = '//*[@id="label_gg5"]/div[1]/a'
@@ -38,6 +39,7 @@ class balance_sheet_data_getter:
         long_term_dd = '//*[@id="label_gg6"]/div[1]/a'
         long_term_debt_string = "//div[contains(text(),'Long-term debt')]"
         long_term_debt = '//*[@id="data_i50"]'
+        common_stk = '//*[@id="data_i82"]'
         
         # Now get the data from the url
         driver = selenium_driver(url = self.url, num_retries = 5)
@@ -73,3 +75,11 @@ class balance_sheet_data_getter:
         self.total_liabilities = string_util.get_processed_data(driver.find_xpath(element_xpath = liab,\
                                                    click_xpath = liab_dd))
         print("Total liabilites: ", self.total_liabilities)
+        
+        self.common_stock = string_util.get_processed_data(driver.find_xpath(element_xpath = common_stk))
+        print("Common stock: ", self.common_stock)
+
+# balance_sheet_url = 'http://financials.morningstar.com/balance-sheet/bs.html?t=' + '524715' + \
+#                                '&region=ind&culture=en-US&platform=sal'
+# balance_sheet = balance_sheet_data_getter(balance_sheet_url)
+# balance_sheet.get_data()
