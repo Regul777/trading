@@ -39,9 +39,9 @@ tickers = ["BAJFINANCE.BO",\
 
 
 interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
-buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -30, adx = 0)
+buy_params = DecisionParams(rsi_level = 50, min_obv_slope = 40, max_obv_slope = 90, adx = 0)
 
-sell_params = DecisionParams(rsi_level = 50, min_obv_slope = 20, max_obv_slope = 23, \
+sell_params = DecisionParams(rsi_level = 50, min_obv_slope = -90, max_obv_slope = -60, \
                            adx = 16, stop_loss_pct = 0.8, stop_loss_adx_threshold = 30)
 
 strategy = Strategy1(buy_params = buy_params, sell_params = sell_params, \

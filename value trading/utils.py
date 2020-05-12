@@ -20,7 +20,7 @@ class string_util:
         data = data.replace(',', '')
         data = data.replace('(', '-')
         data = data.replace(')', '')
-        return int(data)
+        return float(data)
     
     @staticmethod
     def get_processed_data(data):

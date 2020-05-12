@@ -25,8 +25,8 @@ class Strategy1:
     
     def should_buy_now(self, current_state_vals) :
         if (current_state_vals.rsi < self.buy_params.rsi_level and \
-            current_state_vals.obv_slope < self.buy_params.max_obv_slope and \
-            current_state_vals.obv_slope > self.buy_params.min_obv_slope and \
+            #current_state_vals.obv_slope < self.buy_params.max_obv_slope and \
+            #current_state_vals.obv_slope > self.buy_params.min_obv_slope and \
             current_state_vals.adx > self.buy_params.adx) :
             return True
 
@@ -38,13 +38,18 @@ class Strategy1:
                 current_state_vals.current_price < current_state_vals.fib_support) :
                 print("***************Buy based on Fibonacci*****************")
                 return True
+            
+        if (current_state_vals.rsi < self.buy_params.rsi_level and \
+            current_state_vals.obv_slope < self.buy_params.max_obv_slope and \
+            current_state_vals.obv_slope > self.buy_params.min_obv_slope) :
+            return True
 
         return False
     
     def should_sell_now(self, current_state_vals) :
         if (current_state_vals.rsi > self.sell_params.rsi_level and \
-            current_state_vals.obv_slope > self.sell_params.min_obv_slope and \
-            current_state_vals.obv_slope < self.sell_params.max_obv_slope and \
+            #current_state_vals.obv_slope > self.sell_params.min_obv_slope and \
+            #current_state_vals.obv_slope < self.sell_params.max_obv_slope and \
             current_state_vals.adx > self.sell_params.adx) :
             return True
 
@@ -56,6 +61,11 @@ class Strategy1:
                 current_state_vals.current_price > current_state_vals.fib_resistance) :
                 print("***************Sell based on Fibonacci*****************")
                 return True
+            
+        #if (current_state_vals.rsi > self.sell_params.rsi_level and \
+        #    current_state_vals.obv_slope > self.sell_params.min_obv_slope and \
+        #    current_state_vals.obv_slope < self.sell_params.max_obv_slope) :
+        #    return True
 
         return False
     

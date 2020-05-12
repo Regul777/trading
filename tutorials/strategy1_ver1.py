@@ -54,9 +54,9 @@ tickers = ["ASIANPAINT.BO",\
            "ULTRACEMCO.BO"]
 
 interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
-buy_params = DecisionParams(rsi_level = 50, min_obv_slope = -50, max_obv_slope = -10, adx = 23)
+buy_params = DecisionParams(rsi_level = 50, min_obv_slope = 40, max_obv_slope = 90, adx = 23)
 
-sell_params = DecisionParams(rsi_level = 45, min_obv_slope = 30, max_obv_slope = 50, \
+sell_params = DecisionParams(rsi_level = 45, min_obv_slope = -90, max_obv_slope = -60, \
                            adx = 13, stop_loss_pct = 0.9, stop_loss_adx_threshold = 30)
 
 strategy = Strategy1(buy_params = buy_params, sell_params = sell_params, \
