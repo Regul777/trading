@@ -13,114 +13,10 @@ import requests
 from balance_sheet  import balance_sheet_data_getter
 from bs4 import BeautifulSoup
 from cash_flow_statement import cash_flow_statement_getter
+from common import ticker_symbol_id
 from income_statement import income_statement_getter
 from selenium_driver import selenium_driver
 from utils import string_util
-
-tickers = ["ASIANPAINT.BO",\
-           #"AXISBANK.BO",\
-           "BAJAJ-AUTO.BO",\
-           "BHARTIARTL.BO",\
-           "HCLTECH.BO", \
-           #"HDFCBANK.BO",\
-           "HEROMOTOCO.BO",\
-           "HINDUNILVR.BO",\
-           #"INDUSINDBK.BO",\
-           "INFY.BO",\
-           "ITC.BO",\
-           #"KOTAKBANK.BO",\
-           "LT.BO",\
-           "M&M.BO",\
-           "MARUTI.BO",\
-           "NESTLEIND.BO",\
-           "NTPC.BO",\
-           "ONGC.BO",\
-           "POWERGRID.BO",\
-           #"SBIN.BO",\
-           "SUNPHARMA.BO",\
-           "TATASTEEL.BO",\
-           "TCS.BO",\
-           "TECHM.BO",\
-           "ULTRACEMCO.BO",\
-           #"BAJFINANCE.BO",\
-           #"HDFC.BO",\
-           #"ICICIBANK.BO",\
-           "RELIANCE.BO",\
-           "TITAN.BO",\
-           "ADANIPORTS.BO",\
-           #"BAJAJFINSV.BO",\
-           "BPCL.BO",\
-           "BRITANNIA.BO",\
-           "CIPLA.BO",\
-           "COALINDIA.BO",\
-           "DRREDDY.BO",\
-           "EICHERMOT.BO",\
-           "GAIL.BO",\
-           "GODREJCP.BO",\
-           "GRASIM.BO",\
-           "HINDALCO.BO",\
-           "HINDUNILVR.BO",\
-           #"IBULHSGFIN.BO",\
-           "IOC.BO",\
-           "JSWSTEEL.BO",\
-           "TATAMOTORS.BO",\
-           "TATAMTRDVR.BO",\
-           "UPL.BO", \
-           "VEDL.BO",\
-           "WIPRO.BO"]
-           #"YESBANK.BO"]
-
-ticker_symbol_id = dict({"ASIANPAINT.BO":   500820,\
-                         "AXISBANK.BO":     532215,\
-                         "BAJAJ-AUTO.BO":   532977,\
-                         "BHARTIARTL.BO":   532454,\
-                         "HCLTECH.BO":      532281,\
-                         "HDFCBANK.BO":     500180,\
-                         "HEROMOTOCO.BO":   500182,\
-                         "HINDUNILVR.BO":   500696,\
-                         "INDUSINDBK.BO":   532187,\
-                         "INFY.BO":         500209,\
-                         "ITC.BO":          500875,\
-                         "KOTAKBANK.BO":    500247,\
-                         "LT.BO":           500510,\
-                         "M&M.BO":          500520,\
-                         "MARUTI.BO":       532500,\
-                         "NESTLEIND.BO":    500790,\
-                         "NTPC.BO":         532555,\
-                         "ONGC.BO":         500312,\
-                         "POWERGRID.BO":    532898,\
-                         "SBIN.BO":         500112,\
-                         "SUNPHARMA.BO":    524715,\
-                         "TATASTEEL.BO":    500470,\
-                         "TCS.BO":          532540,\
-                         "TECHM.BO":        532755,\
-                         "ULTRACEMCO.BO":   532538,\
-                         "BAJFINANCE.BO":   500034,\
-                         "HDFC.BO":         500010,\
-                         "ICICIBANK.BO":    532174,\
-                         "RELIANCE.BO":     500325,\
-                         "TITAN.BO":        500114,\
-                         "ADANIPORTS.BO":   532921,\
-                         "BAJAJFINSV.BO":   532978,\
-                         "BPCL.BO":         500547,\
-                         "BRITANNIA.BO":    500825,\
-                         "CIPLA.BO":        500087,\
-                         "COALINDIA.BO":    533278,\
-                         "DRREDDY.BO":      500124,\
-                         "EICHERMOT.BO":    505200,\
-                         "GAIL.BO":         532155,\
-                         "GODREJCP.BO":     532424,\
-                         "GRASIM.BO":       500300,\
-                         "HINDALCO.BO":     500440,\
-                         "IBULHSGFIN.BO":   535789,\
-                         "IOC.BO":          530965,\
-                         "JSWSTEEL.BO":     500228,\
-                         "TATAMOTORS.BO":   500570,\
-                         "TATAMTRDVR.BO":   570001,\
-                         "UPL.BO":          512070,\
-                         "VEDL.BO":         500295,\
-                         "WIPRO.BO":        507685,\
-                         "YESBANK.BO":      532648})
 
 # SBI FD gives a return of 6.5%
 risk_free_return_rate = 6.5
@@ -151,7 +47,67 @@ class collated_data:
         self.market_value = market_value
         
 class ticker_data_getter:
+    def get_additional_ticker_data_from_moneycontrol(ticker):
+        eps = 0.0
+        pe = 0.0
+        industry_pe = 0.0
+        book_value = 0.0
+        try:
+            ticker_id = ticker_symbol_id[ticker]
+            url = 'https://www.moneycontrol.com/stocksmarketsindia/'
+            driver = selenium_driver(url = url, num_retries = 5)
+            search_box_xpath = '//*[@id="search_str"]'
+            search_click_xpath = '/html/body/header/div[1]/div/div[2]/div[2]/div[1]/a'
+            eps_xpath = '//*[@id="standalone_valuation"]/ul/li[2]/ul/li[3]/div[2]'
+            pe_xpath = '//*[@id="standalone_valuation"]/ul/li[1]/ul/li[2]/div[2]'
+            industry_pe_xpath = '//*[@id="standalone_valuation"]/ul/li[2]/ul/li[2]/div[2]'
+            book_value_xpath = '//*[@id="standalone_valuation"]/ul/li[1]/ul/li[3]/div[2]'
+            eps = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_key = ticker_id,\
+                                                  search_box_click_xpath = search_click_xpath,\
+                                                  element_xpath = eps_xpath))
+            pe = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_key = ticker_id,\
+                                                  search_box_click_xpath = search_click_xpath,\
+                                                  element_xpath = pe_xpath))
+            industry_pe = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_key = ticker_id,\
+                                                  search_box_click_xpath = search_click_xpath,\
+                                                  element_xpath = industry_pe_xpath))
+            book_value = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_key = ticker_id,\
+                                                  search_box_click_xpath = search_click_xpath,\
+                                                  element_xpath = book_value_xpath))
+        except:
+            print("Encountered some error while fetching additional data for: ", ticker, " from moneycontrol")
+        
+        # TODO: Make a struct for the additional data too 
+        return eps, pe, industry_pe, book_value
+            
     def get_beta_for_ticker(ticker):
+        beta = 0.0
+        try:
+            ticker_id = ticker_symbol_id[ticker]
+            url = 'https://www.moneycontrol.com/stocksmarketsindia/'
+            driver = selenium_driver(url = url, num_retries = 5)
+            search_box_xpath = '//*[@id="search_str"]'
+            search_click_xpath = '/html/body/header/div[1]/div/div[2]/div[2]/div[1]/a'
+            content = driver.get_content_by_searching(search_box_xpath = search_box_xpath,\
+                                                      element_key = ticker_id,\
+                                                      search_box_click_xpath = search_click_xpath)
+            soup = BeautifulSoup(content, "lxml")
+            tabl = soup.find("div", {"class": "bsedata_bx"})
+            temp = tabl.find_all("div", {"class" : "disin vt"})
+            beta_str = temp[1].text
+            beta_str = beta_str.replace('\n', '')
+            beta_str = beta_str.replace(' ', '')
+            beta = float(beta_str[5: len(beta_str)])
+        except:
+            print("Encountered some error while fetching beta for: ", ticker, " from moneycontrol.")
+        
+        return beta
+
+    def get_beta_for_ticker_yahoo_finance(ticker):
         try:
             url = 'https://in.finance.yahoo.com/quote/' + ticker + '?p=' + ticker + '&.tsrc=fin-srch'
             page = requests.get(url)
@@ -428,9 +384,8 @@ class ticker_data_getter:
                 print("Error while calculating instrinsic value of the ticker: ", ticker)
         return collated_data_dict
                 
-#tickers_temp = ["NESTLEIND.BO", "INFY.BO", "SUNPHARMA.BO"]
-tickers_collated_data = ticker_data_getter.get_intrinsic_value_of_tickers(tickers)
-
+#tickers_temp = ["INFY.BO"]
+#tickers_collated_data = ticker_data_getter.get_intrinsic_value_of_tickers(tickers_temp)
 # Now collate the data
 #list_of_tuples = list(zip(tickers_temp, beta_list))
 #ticker_data = pd.DataFrame(list_of_tuples, columns = ['Ticker', 'Beta'])
