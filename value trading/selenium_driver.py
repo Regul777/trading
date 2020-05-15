@@ -57,6 +57,52 @@ class selenium_driver:
             print("Got some error while finding " + element_xpath + " on url: " + self.url + \
                   " with click_xpath " + click_xpath)
             return result
-                
+    
+    def get_content_by_searching(self, search_box_xpath, element_key, search_box_click_xpath):
+        # Once we get the page content through selenium we use beautiful soup on the content
+        # This is done presently for beta as we are not able to get corresponding web element through
+        # selenium find_element_by_xpath api
+        content = ""
+        ctr = 0
+        while (ctr < self.num_retries):
+            driver = webdriver.Chrome('/Users/nishant.gupta/Downloads/chromedriver')
+            driver.implicitly_wait(10)
+            driver.get(self.url)
+            try:
+                # Enter the element_key in the search box and click search
+                driver.find_element_by_xpath(search_box_xpath).send_keys(element_key)
+                driver.find_element_by_xpath(search_box_click_xpath).click()
+                time.sleep(10)
+                content = driver.execute_script("return document.documentElement.outerHTML")
+                driver.quit()
+                return content
+            except:
+                print("Encountered some error in get_content_by_searching.. retry num: ", str(ctr))
+            ctr += 1
+            driver.quit()
+
+        return content
+    
+    def get_element_by_searching(self, search_box_xpath, element_key, search_box_click_xpath, element_xpath):
+        result = ""
+        ctr = 0
+        while (ctr < self.num_retries):
+            driver = webdriver.Chrome('/Users/nishant.gupta/Downloads/chromedriver')
+            driver.implicitly_wait(10)
+            driver.get(self.url)
+            try:
+                # Enter the element_key in the search box and click search
+                driver.find_element_by_xpath(search_box_xpath).send_keys(element_key)
+                driver.find_element_by_xpath(search_box_click_xpath).click()
+                time.sleep(10)
+                result = driver.find_element_by_xpath(element_xpath).text
+                driver.quit()
+                return result
+            except:
+                print("Encountered some error in get_content_by_searching.. retry num: ", str(ctr))
+            ctr += 1
+            driver.quit()
+
+        return result
             
             
