@@ -22,4 +22,5 @@ tickers = ["ADANIPOWER.BO",\
            "THERMAX.BO",\
            "TORNTPOWER.BO"]
 
-intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
+intersting_data_dict, tickers_collated_data, df_power = value_investing_data_getter.get_interesting_data(tickers)
+df_power.to_excel("power.xls")

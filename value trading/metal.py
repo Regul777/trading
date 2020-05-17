@@ -19,4 +19,5 @@ tickers = ["COALINDIA.BO",\
            "TATASTEEL.BO",\
            "VEDL.BO"]
 
-intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
+intersting_data_dict, tickers_collated_data, df_metal = value_investing_data_getter.get_interesting_data(tickers)
+df_metal.to_excel("metal.xls")

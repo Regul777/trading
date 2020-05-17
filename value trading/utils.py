@@ -15,7 +15,9 @@ class string_util:
         # however, ASCII value is not 45 (for '-').
         # Having following temporaily based on :
         # https://stackoverflow.com/questions/631406/what-is-the-difference-between-em-dash-151-and-8212
-        if (len(data) == 1 and ord(data) == 8212):
+        print("**********************************")
+        print("Data: ", data)
+        if (len(data) == 1 and (ord(data) == 8212) or data == '-'):
             return 0
         data = data.replace(',', '')
         data = data.replace('(', '-')
