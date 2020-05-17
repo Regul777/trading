@@ -61,4 +61,5 @@ tickers = ["ASIANPAINT.BO",\
            "WIPRO.BO"]
            #"YESBANK.BO"]
 
-intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
+intersting_data_dict, tickers_collated_data, df_list1 = value_investing_data_getter.get_interesting_data(tickers)
+df_list1.to_excel("list1.xls")

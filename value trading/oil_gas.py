@@ -19,4 +19,5 @@ tickers = ["BPCL.BO",\
            "PETRONET.BO",\
            "RELIANCE.BO"]
 
-intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
+intersting_data_dict, tickers_collated_data, df_oil_gas = value_investing_data_getter.get_interesting_data(tickers)
+df_oil_gas.to_excel("oil_gas.xls")

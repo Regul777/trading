@@ -43,7 +43,5 @@ tickers = ["ADFFOODS.BO",\
             "TAJGVK.BO",\
             "ZENSARTECH.BO"]
 
-intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
-
-
-                         
+intersting_data_dict, tickers_collated_data, df_small_cap = value_investing_data_getter.get_interesting_data(tickers)
+df_small_cap.to_excel("small_cap.xls")                         

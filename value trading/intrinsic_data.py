@@ -10,10 +10,11 @@ import pandas as pd
 from ticker_data import ticker_data_getter
 
 class intersting_data:
-    def __init__(self, pe, industry_pe, de, bv, price, intrinsic_val):
+    def __init__(self, pe, industry_pe, de, current_ratio, bv, price, intrinsic_val):
         self.pe = pe
         self.industry_pe = industry_pe
         self.de = de
+        self.current_ratio = current_ratio
         self.bv = bv
         self.price = price
         self.intrinsic_val = intrinsic_val
@@ -35,7 +36,7 @@ class value_investing_data_getter:
         
         print("Got all the financial data. Going to fetch additional data from moneycontrol.")
         # Schema of the data frame is:
-        # Ticker    P/E     IP/E    D/E     BV      Price       IntrinsicValue
+        # Ticker    P/E     IP/E    D/E     Current ratio       BV      Price       IntrinsicValue
         eps_list = []
         pe_list = []
         industry_pe_list = []
@@ -44,7 +45,8 @@ class value_investing_data_getter:
         price_list = []
         intrinsic_value_list = []
         ticker_list = []
-        columns = ['Ticker', 'EPS', 'P/E', 'IP/E', 'D/E', 'BV', 'Market value', 'Intrinsic value']
+        current_ratio_list = []
+        columns = ['Ticker', 'EPS', 'P/E', 'IP/E', 'D/E', 'Current ratio', 'BV', 'Market value', 'Intrinsic value']
         for ticker in tickers_collated_data.keys():
             try:
                 debt_to_equity_ratio = tickers_collated_data[ticker].Wd
@@ -53,6 +55,7 @@ class value_investing_data_getter:
                 interesting_data_tickers[ticker] = intersting_data(pe = pe,\
                                                                    industry_pe = industry_pe,
                                                                    de = debt_to_equity_ratio,\
+                                                                   current_ratio = tickers_collated_data[ticker].current_ratio,\
                                                                    bv = book_value,\
                                                                    price = \
                                                                        tickers_collated_data[ticker].market_value,\
@@ -63,6 +66,7 @@ class value_investing_data_getter:
                 pe_list.append(pe)
                 industry_pe_list.append(industry_pe)
                 de_list.append(debt_to_equity_ratio)
+                current_ratio_list.append(tickers_collated_data[ticker].current_ratio)
                 book_value_list.append(book_value)
                 price_list.append(tickers_collated_data[ticker].market_value)
                 intrinsic_value_list.append(tickers_collated_data[ticker].intrinsic_value)
@@ -74,6 +78,7 @@ class value_investing_data_getter:
                                    pe_list,\
                                    industry_pe_list,\
                                    de_list,\
+                                   current_ratio_list,\
                                    book_value_list,\
                                    price_list,\
                                    intrinsic_value_list)),\
@@ -81,7 +86,7 @@ class value_investing_data_getter:
         df.set_index('Ticker', inplace = True)
         return interesting_data_tickers, tickers_collated_data, df
 
-#tickers = ["INFY.BO", "ITC.BO"]
+#tickers = ["ITC.BO"]
 #intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
        
             

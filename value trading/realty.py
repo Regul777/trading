@@ -19,4 +19,5 @@ tickers = ["DLF.BO",\
            "SOBHA.BO",\
            "SUNTECK.BO"]
 
-intersting_data_dict, tickers_collated_data, df = value_investing_data_getter.get_interesting_data(tickers)
+intersting_data_dict, tickers_collated_data, df_realty = value_investing_data_getter.get_interesting_data(tickers)
+df_realty.to_excel("realty.xls")

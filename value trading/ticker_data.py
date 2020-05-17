@@ -26,7 +26,7 @@ market_return_rate = 15
 
 class collated_data:
     def __init__(self, beta, ticker_data, avg_net_margin = 0, avg_fcf_net_income_ratio = 0, \
-                 Wd = 0 , Rd = 0, t = 0, We = 0, Re = 0, wacc = 0, dcf = 0,\
+                 Wd = 0 , Rd = 0, t = 0, We = 0, Re = 0, wacc = 0, dcf = 0, current_ratio = 0,\
                  intrinsic_value = 0, market_value = 0):
         # Wd = Weight of debt
         # Rd = Rate of debt
@@ -43,6 +43,7 @@ class collated_data:
         self.Re = Re
         self.wacc = wacc
         self.dcf = dcf
+        self.current_ratio = current_ratio
         self.intrinsic_value = intrinsic_value
         self.market_value = market_value
         
@@ -62,23 +63,32 @@ class ticker_data_getter:
             pe_xpath = '//*[@id="standalone_valuation"]/ul/li[1]/ul/li[2]/div[2]'
             industry_pe_xpath = '//*[@id="standalone_valuation"]/ul/li[2]/ul/li[2]/div[2]'
             book_value_xpath = '//*[@id="standalone_valuation"]/ul/li[1]/ul/li[3]/div[2]'
-            eps = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+            content_eps = driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
                                                   element_key = ticker_id,\
                                                   search_box_click_xpath = search_click_xpath,\
-                                                  element_xpath = eps_xpath))
-            pe = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_xpath = eps_xpath)
+            print("EPS: ", content_eps)
+            eps = string_util.get_processed_data(content_eps)[0]
+            content_pe = driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
                                                   element_key = ticker_id,\
                                                   search_box_click_xpath = search_click_xpath,\
-                                                  element_xpath = pe_xpath))
-            industry_pe = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_xpath = pe_xpath)
+            print("P/E: ", content_pe)
+            pe = string_util.get_processed_data(content_pe)[0]
+            content_industry_pe = driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
                                                   element_key = ticker_id,\
                                                   search_box_click_xpath = search_click_xpath,\
-                                                  element_xpath = industry_pe_xpath))
-            book_value = float(driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
+                                                  element_xpath = industry_pe_xpath)
+            print("IP/E: ", content_industry_pe)
+            industry_pe = string_util.get_processed_data(content_industry_pe)[0]
+            content_bv = driver.get_element_by_searching(search_box_xpath = search_box_xpath,\
                                                   element_key = ticker_id,\
                                                   search_box_click_xpath = search_click_xpath,\
-                                                  element_xpath = book_value_xpath))
-        except:
+                                                  element_xpath = book_value_xpath)
+            print("BV: ", content_bv)
+            book_value = string_util.get_processed_data(content_bv)[0]
+        except Exception as e:
+            print("Encountered exception: ", e)
             print("Encountered some error while fetching additional data for: ", ticker, " from moneycontrol")
         
         # TODO: Make a struct for the additional data too 
@@ -157,7 +167,8 @@ class ticker_data_getter:
             cash_flow_statement.get_data()
             
             return balance_sheet, income_statement, cash_flow_statement
-        except:
+        except Exception as e:
+            print("Encountered exception: ", e)
             print("Problem in scraping financial data for ", ticker)
             
 
@@ -315,6 +326,13 @@ class ticker_data_getter:
                 income_taxes = ticker_data_temp['Provision taxes'][4]
                 income_before_taxes = ticker_data_temp['Income before taxes'][4]
                 
+                # Calculating current ratio now
+                current_assets = ticker_data_temp['Current Assets'][4]
+                print("CA: ", current_assets)
+                total_liabilities = ticker_data_temp['Total liabilites'][4]
+                print("TCL: ", total_liabilities)
+                current_ratio = current_assets / total_liabilities
+                
                 # TODO: Market rate is latest but financial data may be from previous year
                 # so, market_cap caluclated below may contain stale data and hence WACC may get effected
                 market_rate = ticker_data_getter.get_market_price(ticker)
@@ -343,6 +361,7 @@ class ticker_data_getter:
                                                            avg_fcf_net_income_ratio = avg_fcf_net_income_ratio,
                                                            Wd = Wd, Rd = Rd, t = t, We = We, Re = Re,\
                                                            wacc = wacc,\
+                                                           current_ratio = current_ratio,\
                                                            market_value = market_rate)
             except:
                 print("Error encountered while calculating values for value investing for: ", ticker)
@@ -385,6 +404,8 @@ class ticker_data_getter:
         return collated_data_dict
                 
 #tickers_temp = ["INFY.BO"]
+#ticker = "SAIL.BO"
+#eps, pe, industry_pe, book_value = ticker_data_getter.get_additional_ticker_data_from_moneycontrol(ticker)
 #tickers_collated_data = ticker_data_getter.get_intrinsic_value_of_tickers(tickers_temp)
 # Now collate the data
 #list_of_tuples = list(zip(tickers_temp, beta_list))
