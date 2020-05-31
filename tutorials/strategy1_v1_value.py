@@ -53,6 +53,8 @@ tickers = ["ITC.BO",\
 "SUPREMEIND.BO"]
 
 interday_data = interday_testing_helper.get_interday_collated_data(tickers, n = 735, delta = 0)
+
+# Adding parameters for V2
 buy_params = DecisionParams(rsi_level = 50, min_obv_slope = 40, max_obv_slope = 90, adx = 0)
 
 sell_params = DecisionParams(rsi_level = 50, min_obv_slope = -90, max_obv_slope = -60, \
